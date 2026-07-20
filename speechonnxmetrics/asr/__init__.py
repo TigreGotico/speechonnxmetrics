@@ -1,4 +1,46 @@
-"""ASR-based metrics: WER, CER, MER, WIL, WIP.
+"""ASR-based metrics: WER, CER, MER, WIL, WIP."""
+from speechonnxmetrics.asr.normalize import (
+    BASIC,
+    STRICT,
+    Normalizer,
+    collapse_whitespace,
+    expand_contractions,
+    lowercase,
+    remove_diacritics,
+    strip_filler_words,
+    strip_punctuation,
+)
+from speechonnxmetrics.asr.wer import (
+    AsrMetrics,
+    EmptyReferenceError,
+    Op,
+    align,
+    cer,
+    compute,
+    mer,
+    wer,
+    wil,
+    wip,
+)
 
-Planned — not yet implemented.
-"""
+__all__ = [
+    "AsrMetrics",
+    "EmptyReferenceError",
+    "Op",
+    "align",
+    "cer",
+    "compute",
+    "mer",
+    "wer",
+    "wil",
+    "wip",
+    "Normalizer",
+    "BASIC",
+    "STRICT",
+    "lowercase",
+    "strip_punctuation",
+    "collapse_whitespace",
+    "remove_diacritics",
+    "expand_contractions",
+    "strip_filler_words",
+]
