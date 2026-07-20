@@ -126,6 +126,11 @@ _MOS_SPECS: list[tuple[str, Any, str]] = [
     ("dnsmos_p808", mos.DNSMOSP808(), "DNSMOS P.808 crowdsourced-listening MOS (1-5)"),
     ("sigmos", mos.SIGMOS(), "SIGMOS P.804 seven-dimension quality prediction (1-5)"),
     ("utmos", mos.UTMOS(), "UTMOS22 naturalness MOS (1-5)"),
+    (
+        "nisqa",
+        mos.NISQA(),
+        "NISQA-v2 five-dimension quality prediction (1-5); NonCommercial weights",
+    ),
 ]
 
 for _name, _metric, _desc in _MOS_SPECS:

@@ -16,8 +16,11 @@ import pytest
 
 from speechonnxmetrics import api, registry
 from speechonnxmetrics._dsp.audio import AudioLoadError
-from speechonnxmetrics.mos import DNSMOS, SIGMOS, UTMOS, DNSMOSP808
+from speechonnxmetrics.mos import DNSMOS, NISQA, SIGMOS, UTMOS, DNSMOSP808
 from speechonnxmetrics.mos.dnsmos import WINDOW_SAMPLES, segment
+from speechonnxmetrics.mos.nisqa import DIMENSIONS as NISQA_DIMENSIONS
+from speechonnxmetrics.mos.nisqa import melspec
+from speechonnxmetrics.mos.nisqa import segment as nisqa_segment
 from speechonnxmetrics.mos.sigmos import DIMENSIONS, features
 from speechonnxmetrics.mos.utmos import MIN_SAMPLES
 
@@ -32,6 +35,10 @@ DEMO = Path("/home/miro/AgentWorkspaces/ml/voiceclonnx/demo")
 #: reference's own features reproduces its scores to 2.2e-4, so the residual is
 #: reference-side precision, not a frontend difference.
 TOL = {"dnsmos": 1e-5, "dnsmos_p808": 1e-5, "sigmos": 2e-3, "utmos": 1e-4}
+
+#: NISQA agrees with the torch reference to 2.6e-06 through our frontend; 1e-4 leaves
+#: room for float32 ordering differences without hiding a frontend parameter error.
+NISQA_TOL = 1e-4
 
 
 def _weights_available() -> bool:
@@ -48,7 +55,7 @@ def _weights_available() -> bool:
     shared = Path(constants.HF_HUB_CACHE)
     return any(
         any(shared.glob(f"**/{repo}-onnx/**/*.onnx"))
-        for repo in ("dnsmos", "sigmos", "utmos")
+        for repo in ("dnsmos", "sigmos", "utmos", "nisqa")
     )
 
 
@@ -83,7 +90,7 @@ def _stub(metric, outputs, input_names=("input",)):
 # ------------------------------------------------------------------ #
 # registration and construction
 # ------------------------------------------------------------------ #
-@pytest.mark.parametrize("name", ["dnsmos", "dnsmos_p808", "sigmos", "utmos"])
+@pytest.mark.parametrize("name", ["dnsmos", "dnsmos_p808", "sigmos", "utmos", "nisqa"])
 def test_registered_as_download_backed_audio_metrics(name: str) -> None:
     entry = registry.get(name)
     assert entry.kind == "audio"
@@ -382,3 +389,161 @@ def test_scores_stay_inside_the_mos_range_on_real_audio() -> None:
         value = metric(clip, None)
         values = list(value.values()) if isinstance(value, dict) else [value]
         assert all(1.0 <= v <= 5.0 for v in values), (metric.name, values)
+
+
+# ------------------------------------------------------------------ #
+# NISQA
+# ------------------------------------------------------------------ #
+def test_nisqa_is_rate_adaptive_rather_than_pinned_to_one_rate() -> None:
+    assert NISQA().sample_rate is None
+
+
+def test_nisqa_licence_records_the_noncommercial_weights() -> None:
+    assert "NonCommercial" in NISQA().model.license
+
+
+def test_nisqa_dimension_order_matches_the_reference_columns() -> None:
+    """``NISQA_lib`` emits mos/noi/dis/col/loud; the class docstring's col/dis swap is
+    a documentation bug and must not be copied here."""
+    assert NISQA_DIMENSIONS == ("mos", "noi", "dis", "col", "loud")
+
+
+@pytest.mark.parametrize(
+    "n_frames,expected", [(15, 1), (18, 1), (19, 2), (23, 3), (100, 22), (1000, 247)]
+)
+def test_nisqa_segment_count_follows_ceil_of_the_hop(n_frames: int, expected: int) -> None:
+    segments = nisqa_segment(np.zeros((48, n_frames), dtype=np.float64))
+    assert segments.shape == (expected, 1, 48, 15)
+    assert segments.dtype == np.float32
+
+
+def test_nisqa_segments_are_consecutive_windows_four_frames_apart() -> None:
+    spec = np.tile(np.arange(23, dtype=np.float64), (48, 1))
+    segments = nisqa_segment(spec)
+    assert np.array_equal(segments[0, 0, 0], np.arange(15))
+    assert np.array_equal(segments[1, 0, 0], np.arange(4, 19))
+
+
+def test_nisqa_segment_rejects_a_spectrogram_below_one_window() -> None:
+    with pytest.raises(ValueError, match="too short"):
+        nisqa_segment(np.zeros((48, 14), dtype=np.float64))
+
+
+def test_nisqa_frontend_feeds_a_batched_segment_stack() -> None:
+    metric = NISQA()
+    session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
+    metric(np.zeros(16000, dtype=np.float32), 16000)
+    segments = session.feeds[0]["segments"]
+    assert segments.ndim == 5 and segments.shape[2:] == (1, 48, 15)
+    assert segments.shape[0] == 1 and segments.dtype == np.float32
+
+
+def test_nisqa_returns_all_five_dimensions_in_order() -> None:
+    metric = NISQA()
+    _stub(metric, [np.arange(5, dtype=np.float32).reshape(1, 5) + 1.0], ("segments",))
+    scores = metric(np.zeros(16000, dtype=np.float32), 16000)
+    assert list(scores) == list(NISQA_DIMENSIONS)
+    assert scores["mos"] == 1.0 and scores["loud"] == 5.0
+
+
+def test_nisqa_flattens_through_score() -> None:
+    metric = registry.get("nisqa").fn
+    _stub(metric, [np.arange(5, dtype=np.float32).reshape(1, 5) + 1.0], ("segments",))
+    try:
+        row = api.score(np.zeros(16000, dtype=np.float32), ["nisqa"], sr=16000)
+    finally:
+        metric._session = None
+    assert set(row) == {f"nisqa.{d}" for d in NISQA_DIMENSIONS}
+    assert row["nisqa.mos"] == 1.0
+
+
+def test_nisqa_hop_and_window_adapt_to_the_sample_rate_without_resampling() -> None:
+    metric = NISQA()
+    session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
+    metric(np.zeros(44100, dtype=np.float32), 44100)  # one second at 44.1 kHz
+    metric(np.zeros(16000, dtype=np.float32), 16000)  # one second at 16 kHz
+    # a 10 ms hop at either rate means ~100 frames/s, hence the same segment count;
+    # a silent resample to 16 kHz would still give this, so also check the frames
+    counts = [feed["segments"].shape[1] for feed in session.feeds]
+    assert counts[0] == counts[1]
+    frames_44k = melspec(np.zeros(44100, dtype=np.float32), 44100).shape[1]
+    assert frames_44k == 1 + 44100 // int(44100 * 0.01)
+
+
+@pytest.mark.parametrize("n_samples", [1, 100, 2048, 2239])
+def test_nisqa_rejects_audio_shorter_than_one_segment(n_samples: int) -> None:
+    metric = NISQA()
+    _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
+    with pytest.raises(ValueError, match="too short"):
+        metric(np.zeros(n_samples, dtype=np.float32), 16000)
+
+
+def test_nisqa_scores_exactly_one_segment() -> None:
+    metric = NISQA()
+    session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
+    # 15 frames at a 160-sample hop: 1 + n//160 == 15
+    metric(np.zeros(14 * 160, dtype=np.float32), 16000)
+    assert session.feeds[0]["segments"].shape[:2] == (1, 1)
+
+
+def test_nisqa_scores_all_zero_audio_without_nan() -> None:
+    spec = melspec(np.zeros(16000, dtype=np.float32), 16000)
+    assert np.all(np.isfinite(spec))
+    # amin=1e-4 floors the magnitude, so silence lands on a finite -80 dB plateau
+    assert spec.max() == pytest.approx(-80.0)
+
+
+def test_nisqa_rejects_empty_audio() -> None:
+    with pytest.raises(ValueError, match="empty audio"):
+        melspec(np.array([], dtype=np.float32), 16000)
+
+
+@pytest.mark.parametrize("bad", [np.array([np.nan, 0.1]), np.array([np.inf, 0.1])])
+def test_nisqa_rejects_non_finite_audio(bad: np.ndarray) -> None:
+    with pytest.raises(AudioLoadError, match="NaN/inf"):
+        NISQA()(bad.astype(np.float32), 16000)
+
+
+def test_nisqa_non_finite_model_output_raises() -> None:
+    metric = NISQA()
+    _stub(metric, [np.full((1, 5), np.nan, dtype=np.float32)], ("segments",))
+    with pytest.raises(ValueError, match="non-finite"):
+        metric(np.zeros(16000, dtype=np.float32), 16000)
+
+
+def test_nisqa_downmixes_stereo() -> None:
+    metric = NISQA()
+    session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
+    stereo = np.stack([np.full(16000, 0.2), np.full(16000, 0.4)], axis=1).astype(np.float32)
+    metric(stereo, 16000)
+    mono = metric._frontend(np.full(16000, 0.3, dtype=np.float32), 16000)
+    assert np.allclose(session.feeds[0]["segments"], mono["segments"])
+
+
+with open(FIXTURES / "nisqa_fixture.json") as _f:
+    NISQA_PARITY = json.load(_f)
+
+
+def _nisqa_clip_path(key: str) -> Path:
+    if not key.startswith("demo/"):
+        return Path(__file__).parent.parent / key
+    name = Path(key).name
+    return DEMO / name if (DEMO / name).is_file() else DEMO / "outputs" / name
+
+
+@pytest.mark.models
+@needs_weights
+@pytest.mark.parametrize("key", sorted(NISQA_PARITY))
+def test_nisqa_parity_against_the_torch_reference(key: str) -> None:
+    """Our numpy frontend vs upstream's librosa frontend, both into the NISQA model.
+
+    Expected values are the torch ``NISQA_DIM`` forward pass over librosa-computed
+    features. The clips span 10, 16 and 24 kHz, so the rate-adaptive hop/window are
+    exercised too.
+    """
+    path = _nisqa_clip_path(key)
+    if not path.is_file():
+        pytest.skip(f"clip not present in this checkout: {path}")
+    scores = NISQA()(str(path), None)
+    for dim, want in NISQA_PARITY[key]["nisqa"].items():
+        assert scores[dim] == pytest.approx(want, abs=NISQA_TOL), dim

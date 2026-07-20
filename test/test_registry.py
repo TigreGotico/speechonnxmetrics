@@ -36,7 +36,7 @@ def test_list_metrics_filters_by_requires_download():
     assert all(not e.requires_download for e in registry.list_metrics(requires_download=False))
     # the MOS predictors are the download-backed metrics; everything else is pure numpy
     assert {e.name for e in registry.list_metrics(requires_download=True)} == {
-        "dnsmos", "dnsmos_p808", "sigmos", "utmos",
+        "dnsmos", "dnsmos_p808", "sigmos", "utmos", "nisqa",
     }
 
 
