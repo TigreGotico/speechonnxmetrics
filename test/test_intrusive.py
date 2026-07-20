@@ -15,6 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from speechonnxmetrics._dsp import kaiser_resample
 from speechonnxmetrics.intrusive import (
     IntrusiveMetricError,
     estoi,
@@ -110,6 +111,27 @@ class TestSTOI:
         deg, ref = _fixture_pair(case)
         assert stoi(deg, FIXTURE_SR, ref=ref) == pytest.approx(case["stoi"], abs=_STOI_ATOL)
         assert estoi(deg, FIXTURE_SR, ref=ref) == pytest.approx(case["estoi"], abs=_ESTOI_ATOL)
+
+    @pytest.mark.parametrize("metric", [stoi, estoi], ids=["stoi", "estoi"])
+    @pytest.mark.parametrize("input_sr", [16000, 22050, 44100])
+    def test_score_is_stable_across_input_sample_rates(self, metric, input_sr):
+        """Callers pass whatever rate their audio happens to be at, so the resample
+        path into STOI's 10 kHz analysis rate must not move the score.
+
+        The pystoi fixture deliberately uses audio pre-resampled to 10 kHz, to test
+        the STOI math without conflating it with resampler differences — which leaves
+        the resample path itself uncovered. This is that coverage: the score at the
+        fixture's native rate is the reference, and upsampling the same content to a
+        higher rate and letting the metric resample back must reproduce it.
+        """
+        ref = _read_fixture_wav("source.wav")
+        deg = _read_fixture_wav("facodec_aria.wav")
+        native = metric(deg, FIXTURE_SR, ref=ref)
+        up = metric(
+            kaiser_resample(deg, FIXTURE_SR, input_sr), input_sr,
+            ref=kaiser_resample(ref, FIXTURE_SR, input_sr),
+        )
+        assert up == pytest.approx(native, abs=2e-3)
 
     def test_identical_signals_give_one(self):
         x = _speechlike(2.0, SR, 0)
