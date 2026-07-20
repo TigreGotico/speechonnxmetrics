@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import warnings
+import wave
 from pathlib import Path
 
 import numpy as np
@@ -30,19 +31,35 @@ from speechonnxmetrics.intrusive import (
 )
 
 SR = 16000
-FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "stoi_fixture.json").read_text())
+FIXTURE_DIR = Path(__file__).parent / "fixtures"
+FIXTURE = json.loads((FIXTURE_DIR / "stoi_fixture.json").read_text())
+FIXTURE_SR = FIXTURE["sr"]  # 10 kHz — the STOI standard rate; fixture audio is pre-resampled to it
 
-# STOI parity tolerance: the shared _dsp.stft frames on a slightly different sample
-# grid than pystoi's own ad hoc analysis loop (compensated for with a front-padding
-# trick — see stoi.py's _band_envelopes docstring — but not exact at the boundary
-# frames), so full float parity is not expected; correlation-based scores stay close.
-_STOI_ATOL = 0.02
-# ESTOI correlates whole 15-band x 30-frame segments, so it is more sensitive than
-# STOI to the same small framing-offset residual — a looser tolerance is needed.
-_ESTOI_ATOL = 0.1
+# Parity tolerance for cases scored at the fixture's native 10 kHz (no resampling on
+# either side): the VAD, band-decomposition and correlation math match pystoi to
+# floating-point precision — verified directly against pystoi.utils intermediates
+# (removed-silent-frames output and per-band envelope matrices agree to ~1e-6, and the
+# final scores to ~1e-9) once both implementations operate on identical input samples.
+_STOI_ATOL = 1e-4
+# pystoi's row_col_normalize adds EPS * np.random.standard_normal jitter purely to
+# avoid dividing by a zero-variance row/column; we add a deterministic epsilon
+# instead (see stoi.py's estoi() docstring), so ESTOI values differ by up to a few
+# 1e-4 rather than agreeing to float precision like STOI does.
+_ESTOI_ATOL = 3e-4
 
 
-def _speechlike(duration: float, sr: int, seed: int) -> np.ndarray:
+def _read_fixture_wav(name: str) -> np.ndarray:
+    with wave.open(str(FIXTURE_DIR / "audio" / name), "rb") as wf:
+        assert wf.getframerate() == FIXTURE_SR
+        raw = wf.readframes(wf.getnframes())
+    return (np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0)
+
+
+def _synthetic_speechlike(duration: float, sr: int, seed: int) -> np.ndarray:
+    """A stationary harmonic stack — kept only as a pure-arithmetic regression
+    anchor; not representative of real speech (see the fixture generator's
+    docstring). Real degradation curves are covered by the fixture's ``real*`` cases,
+    built from genuine codec/voice-conversion output on real speech."""
     rng = np.random.default_rng(seed)
     t = np.arange(int(duration * sr)) / sr
     f0 = 110 + 30 * np.sin(2 * np.pi * (0.4 + 0.1 * rng.random()) * t)
@@ -50,6 +67,10 @@ def _speechlike(duration: float, sr: int, seed: int) -> np.ndarray:
     harmonics = sum(np.sin(k * phase) / k for k in range(1, 8))
     env = 0.5 + 0.5 * np.sin(2 * np.pi * (2.5 + rng.random()) * t)
     return (0.2 * harmonics * env).astype(np.float32)
+
+
+def _speechlike(duration: float, sr: int, seed: int) -> np.ndarray:
+    return _synthetic_speechlike(duration, sr, seed)
 
 
 def _noisy(x: np.ndarray, snr_db: float, seed: int) -> np.ndarray:
@@ -64,15 +85,31 @@ def _sine(freq: float, duration: float, sr: int = SR, amp: float = 0.3) -> np.nd
     return (amp * np.sin(2 * np.pi * freq * t)).astype(np.float32)
 
 
+def _fixture_pair(case: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Reconstruct the (deg, ref) pair a fixture case was scored on, at FIXTURE_SR."""
+    kind = case["kind"]
+    if kind == "real":
+        return _read_fixture_wav(case["deg_file"]), _read_fixture_wav(case["ref_file"])
+    if kind == "real_noisy":
+        ref = _read_fixture_wav(case["ref_file"])
+        return _noisy(ref, case["snr_db"], seed=case["snr_db"] + 1000), ref
+    if kind == "real_identical":
+        ref = _read_fixture_wav(case["ref_file"])
+        return ref, ref
+    if kind == "synthetic":
+        ref = _synthetic_speechlike(2.0, FIXTURE_SR, case["seed"])
+        return _noisy(ref, case["snr_db"], seed=case["seed"] + 100), ref
+    raise ValueError(f"unknown fixture case kind: {kind!r}")
+
+
 # ---------------------------------------------------------------------------- STOI
 
 class TestSTOI:
-    @pytest.mark.parametrize("case", FIXTURE["cases"])
+    @pytest.mark.parametrize("case", FIXTURE["cases"], ids=lambda c: f"{c['kind']}-{c.get('deg_file', c.get('snr_db'))}")
     def test_matches_pystoi_fixture(self, case):
-        x = _speechlike(2.0, FIXTURE["sr"], case["seed"])
-        y = x if case["snr_db"] is None else _noisy(x, case["snr_db"], case["seed"] + 100)
-        assert stoi(y, FIXTURE["sr"], ref=x) == pytest.approx(case["stoi"], abs=_STOI_ATOL)
-        assert estoi(y, FIXTURE["sr"], ref=x) == pytest.approx(case["estoi"], abs=_ESTOI_ATOL)
+        deg, ref = _fixture_pair(case)
+        assert stoi(deg, FIXTURE_SR, ref=ref) == pytest.approx(case["stoi"], abs=_STOI_ATOL)
+        assert estoi(deg, FIXTURE_SR, ref=ref) == pytest.approx(case["estoi"], abs=_ESTOI_ATOL)
 
     def test_identical_signals_give_one(self):
         x = _speechlike(2.0, SR, 0)

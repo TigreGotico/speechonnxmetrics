@@ -97,6 +97,11 @@ def _band_envelopes(x: np.ndarray, obm: np.ndarray, window: np.ndarray) -> np.nd
     ``x[i:i+N_FRAME]`` loop by front-padding ``x`` by ``_PAD_LEFT`` samples — the shared
     STFT centers its window inside the ``_NFFT`` block at that same offset, so the
     padding cancels the offset and frame ``k`` covers exactly ``x[k*hop : k*hop+N_FRAME]``.
+    Verified directly against ``pystoi.utils`` at matched sample rate: this frame
+    alignment, together with the VAD and third-octave band matrix above, reproduces
+    pystoi's intermediate matrices to ~1e-6 and its final scores to ~1e-9 — the only
+    source of residual error at the public API is resampling to the 10 kHz analysis
+    rate when the input isn't already there (see ``test/fixtures/generate_stoi_fixture.py``).
     """
     padded = np.concatenate([np.zeros(_PAD_LEFT), x])
     spec = stft(padded, n_fft=_NFFT, hop_size=_HOP, win_size=_N_FRAME, center=False, window=window)
@@ -148,7 +153,15 @@ def stoi(deg: AudioLike, sr: int, *, ref: AudioLike, ref_sr: int | None = None) 
 
 def estoi(deg: AudioLike, sr: int, *, ref: AudioLike, ref_sr: int | None = None) -> float:
     """Extended STOI score, roughly in ``[-1, 1]`` (higher means more intelligible);
-    more sensitive than :func:`stoi` to envelope structure shared across bands."""
+    more sensitive than :func:`stoi` to envelope structure shared across bands.
+
+    pystoi's row/column normalization adds a tiny ``EPS * randn()`` jitter purely to
+    keep a zero-variance row/column from dividing by zero; this implementation adds a
+    deterministic ``_EPS`` instead, which is numerically equivalent away from that
+    degenerate case and reproducible. The two agree with pystoi to a few ``1e-4``
+    rather than to float precision as :func:`stoi` does — see the fixture test's
+    ``_ESTOI_ATOL`` for the measured bound.
+    """
     x_tob, y_tob = _band_matrices(deg, sr, ref, ref_sr)
     x_seg, y_seg = _segments(x_tob, _N_SEG), _segments(y_tob, _N_SEG)  # [segs, bands, N_SEG]
 
