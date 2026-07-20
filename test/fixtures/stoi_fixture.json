@@ -1,0 +1,67 @@
+{
+  "sr": 10000,
+  "cases": [
+    {
+      "kind": "real",
+      "ref_file": "source.wav",
+      "deg_file": "facodec_aria.wav",
+      "stoi": 0.6620030197850547,
+      "estoi": 0.3994431477633189
+    },
+    {
+      "kind": "real",
+      "ref_file": "source.wav",
+      "deg_file": "bicodec_aria.wav",
+      "stoi": 0.7898427718285019,
+      "estoi": 0.6685408764131481
+    },
+    {
+      "kind": "real_noisy",
+      "ref_file": "source.wav",
+      "snr_db": 40,
+      "stoi": 0.9999351778018659,
+      "estoi": 0.9997540331152472
+    },
+    {
+      "kind": "real_noisy",
+      "ref_file": "source.wav",
+      "snr_db": 20,
+      "stoi": 0.9922605355237907,
+      "estoi": 0.975471338403223
+    },
+    {
+      "kind": "real_noisy",
+      "ref_file": "source.wav",
+      "snr_db": 10,
+      "stoi": 0.9544371348685234,
+      "estoi": 0.8745548847541661
+    },
+    {
+      "kind": "real_noisy",
+      "ref_file": "source.wav",
+      "snr_db": 0,
+      "stoi": 0.7941452750490791,
+      "estoi": 0.550689194561204
+    },
+    {
+      "kind": "real_identical",
+      "ref_file": "source.wav",
+      "stoi": 1.0000000000000002,
+      "estoi": 1.0
+    },
+    {
+      "kind": "synthetic",
+      "seed": 0,
+      "snr_db": 20,
+      "stoi": 0.7058319404997252,
+      "estoi": 0.2659551170777209
+    },
+    {
+      "kind": "synthetic",
+      "seed": 1,
+      "snr_db": 20,
+      "stoi": 0.7245470977504088,
+      "estoi": 0.23729243294827282
+    }
+  ]
+}
