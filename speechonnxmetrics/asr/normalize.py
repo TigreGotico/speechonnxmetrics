@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 _WHITESPACE_RE = re.compile(r"\s+")
+_LEGACY_DISALLOWED_RE = re.compile(r"[^a-z' ]")
 
 _CONTRACTIONS = {
     "won't": "will not", "can't": "cannot", "shan't": "shall not",
@@ -49,6 +50,11 @@ def strip_filler_words(text: str) -> str:
     return " ".join(w for w in text.split() if w.lower() not in _FILLER_WORDS)
 
 
+def strip_non_legacy_chars(text: str) -> str:
+    """Replace every character outside ``[a-z' ]`` with a space (legacy tokenizer behavior)."""
+    return _LEGACY_DISALLOWED_RE.sub(" ", text)
+
+
 @dataclass(frozen=True)
 class Normalizer:
     """Chains normalizer callables in order, left to right."""
@@ -70,3 +76,12 @@ STRICT = Normalizer((
     strip_filler_words,
     collapse_whitespace,
 ))
+#: Reproduces the tokenizer baked into ``voiceclonnx/demo/verify_demos.py``,
+#: ``tests/test_bicodec.py`` and ``tests/test_facodec.py``:
+#: ``re.sub(r"[^a-z' ]", " ", text.lower()).split()``. Kept so migrating those
+#: call sites onto :func:`speechonnxmetrics.asr.wer.wer` is provably
+#: value-preserving. Not recommended for new code: it discards every
+#: non-ASCII character (accented Latin, Arabic, etc.) by replacing it with a
+#: space instead of transliterating or normalizing it, silently destroying
+#: non-English input.
+LEGACY = Normalizer((lowercase, strip_non_legacy_chars, collapse_whitespace))

@@ -1,6 +1,7 @@
 """ASR-based metrics: WER, CER, MER, WIL, WIP."""
 from speechonnxmetrics.asr.normalize import (
     BASIC,
+    LEGACY,
     STRICT,
     Normalizer,
     collapse_whitespace,
@@ -8,6 +9,7 @@ from speechonnxmetrics.asr.normalize import (
     lowercase,
     remove_diacritics,
     strip_filler_words,
+    strip_non_legacy_chars,
     strip_punctuation,
 )
 from speechonnxmetrics.asr.wer import (
@@ -37,10 +39,12 @@ __all__ = [
     "Normalizer",
     "BASIC",
     "STRICT",
+    "LEGACY",
     "lowercase",
     "strip_punctuation",
     "collapse_whitespace",
     "remove_diacritics",
     "expand_contractions",
     "strip_filler_words",
+    "strip_non_legacy_chars",
 ]

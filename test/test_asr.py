@@ -7,6 +7,7 @@ import pytest
 
 from speechonnxmetrics.asr import (
     BASIC,
+    LEGACY,
     STRICT,
     AsrMetrics,
     EmptyReferenceError,
@@ -243,3 +244,63 @@ def test_normalizer_default_is_none_no_silent_normalization():
     # differing case with no normalizer must NOT be treated as equal
     assert wer("Hello World", "hello world") == pytest.approx(1.0)
     assert wer("Hello World", "hello world", normalizer=BASIC) == pytest.approx(0.0)
+
+
+# --- LEGACY preset: exact reproduction of the voiceclonnx tokenizer ------------------------
+# re.sub(r"[^a-z' ]", " ", text.lower()).split() — values hand-derived from that regex.
+
+_LEGACY_CASES = {
+    "punctuation_stripped_matches": ("Hello, world!", "hello world", 0.0),
+    "contraction_not_expanded": ("Don't stop", "dont stop", 0.5),
+    "all_caps_vs_lower": ("THE QUICK BROWN FOX", "the quick brown fox", 0.0),
+    "contractions_preserved_both_sides": ("I can't believe it's not butter!", "i can't believe it's not butter", 0.0),
+    "word_order_swap": ("one two three", "one three two", 2 / 3),
+    "hyp_shorter_by_deletion": ("hello world", "", 1.0),
+    "apostrophe_stripped_in_hyp_only": ("it's a test", "its a test", 1 / 3),
+    "all_contractions_diverge": ("don't don't don't", "dont dont dont", 1.0),
+    "multiple_spaces_collapsed": ("Multiple   spaces   here", "multiple spaces here", 0.0),
+    "digits_and_symbols_stripped": ("Numbers 123 and symbols #@!", "numbers and symbols", 0.0),
+    "quotes_stripped": ('She said, "hello!"', "she said hello", 0.0),
+    "apostrophe_word_and_contraction": ("Y'all can't stop me", "yall cant stop me", 0.5),
+    "hyphens_become_spaces": ("apple-pie a-la-mode", "apple pie a la mode", 0.0),
+    "percent_and_digits_stripped": ("100% correct", "correct", 0.0),
+    "underscore_and_hyphen_become_spaces": ("hello_world test-case", "hello world test case", 0.0),
+    "mixed_case_matches": ("Mixed CASE Text HERE", "mixed case text here", 0.0),
+    "apostrophes_preserved_when_matching": ("a'b'c d'e'f", "a'b'c d'e'f", 0.0),
+    "newline_and_tab_become_spaces": ("newline\ntext\there", "newline text here", 0.0),
+    "identical_short_sentences": ("one two three", "one two three", 0.0),
+    "diacritics_destroyed_not_transliterated": ("café résumé naïve", "cafe resume naive", 1.0),
+    "arabic_word_destroyed_not_transliterated": ("açãoação", "acao acao", 1.0),
+}
+
+
+@pytest.mark.parametrize("case", _LEGACY_CASES.values(), ids=_LEGACY_CASES.keys())
+def test_legacy_preset_matches_hand_derived_wer(case):
+    ref, hyp, expected = case
+    assert wer(ref, hyp, normalizer=LEGACY) == pytest.approx(expected)
+
+
+def test_legacy_preset_raises_on_ref_that_becomes_empty():
+    # every character in the reference falls outside [a-z' ] and is stripped to whitespace
+    with pytest.raises(EmptyReferenceError):
+        wer("مرحبا بالعالم", "hello world", normalizer=LEGACY)
+
+
+def test_legacy_preset_raises_on_literally_empty_ref():
+    with pytest.raises(EmptyReferenceError):
+        wer("", "hello", normalizer=LEGACY)
+
+
+def test_legacy_preset_discards_portuguese_diacritics_to_spaces():
+    # "ação" -> lowercase "ação" -> [^a-z' ] strips the non-ASCII "çã" to spaces,
+    # fragmenting the word instead of preserving or transliterating it
+    assert LEGACY("ação") == "a o"
+
+
+def test_legacy_preset_discards_arabic_script_to_spaces():
+    assert LEGACY("مرحبا بالعالم") == ""
+
+
+def test_legacy_preset_does_not_expand_contractions_unlike_strict():
+    assert LEGACY("Don't stop") == "don't stop"
+    assert STRICT("Don't stop") == "do not stop"
