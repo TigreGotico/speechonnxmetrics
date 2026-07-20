@@ -7,7 +7,11 @@ validated with. Pure numpy; validated against torch to < 1e-4.
 """
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
+
+PadMode = Literal["reflect", "constant"]
 
 
 def _padded_hann(win_length: int, n_fft: int) -> np.ndarray:
@@ -56,17 +60,19 @@ def vorbis_window(win_length: int) -> np.ndarray:
 
 def stft(
     audio: np.ndarray, n_fft: int, hop_size: int, win_size: int, center: bool = True,
-    window: np.ndarray | None = None,
+    window: np.ndarray | None = None, pad_mode: PadMode = "reflect",
 ) -> np.ndarray:
     """Return the complex STFT ``[n_fft//2+1, frames]`` matching ``torch.stft``.
 
     ``window`` overrides the default periodic Hann with an explicit ``n_fft``-long
     window (e.g. the Vorbis window some enhancement models are trained with).
+    ``pad_mode`` selects the centre-padding mode: ``"reflect"`` (``torch.stft``) or
+    ``"constant"`` (``librosa.stft``, which zero-pads by default).
     """
     x = np.asarray(audio, dtype=np.float64)
     win = _resolve_window(window, win_size, n_fft)
     if center:
-        x = np.pad(x, (n_fft // 2, n_fft // 2), mode="reflect")
+        x = np.pad(x, (n_fft // 2, n_fft // 2), mode=pad_mode)
     n_frames = 1 + (len(x) - n_fft) // hop_size
     frames = np.lib.stride_tricks.as_strided(
         x, shape=(n_frames, n_fft),

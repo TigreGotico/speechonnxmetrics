@@ -33,9 +33,11 @@ def test_list_metrics_filters_by_intrusive():
 
 
 def test_list_metrics_filters_by_requires_download():
-    # every currently-registered metric is pure numpy, none require a download
     assert all(not e.requires_download for e in registry.list_metrics(requires_download=False))
-    assert registry.list_metrics(requires_download=True) == []
+    # the MOS predictors are the download-backed metrics; everything else is pure numpy
+    assert {e.name for e in registry.list_metrics(requires_download=True)} == {
+        "dnsmos", "dnsmos_p808", "sigmos", "utmos",
+    }
 
 
 def test_registry_import_does_not_import_onnxruntime():

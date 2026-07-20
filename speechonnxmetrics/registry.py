@@ -23,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
 
-from speechonnxmetrics import asr, intrusive
+from speechonnxmetrics import asr, intrusive, mos
 
 AudioFn = Callable[..., Any]
 TextFn = Callable[..., float]
@@ -115,6 +115,30 @@ for _name, _fn, _higher, _range in _INTRUSIVE_SPECS:
             range=_range,
             higher_is_better=_higher,
             description=(_fn.__doc__ or "").strip().splitlines()[0] if _fn.__doc__ else "",
+        )
+    )
+
+# MOS predictors: one shared instance each, so a session is built at most once per
+# process and reused across every scored item. Instantiating them here is free — an
+# OnnxMetric never creates its session in __init__.
+_MOS_SPECS: list[tuple[str, Any, str]] = [
+    ("dnsmos", mos.DNSMOS(), "DNSMOS P.835 sig/bak/ovrl quality triplet (1-5)"),
+    ("dnsmos_p808", mos.DNSMOSP808(), "DNSMOS P.808 crowdsourced-listening MOS (1-5)"),
+    ("sigmos", mos.SIGMOS(), "SIGMOS P.804 seven-dimension quality prediction (1-5)"),
+    ("utmos", mos.UTMOS(), "UTMOS22 naturalness MOS (1-5)"),
+]
+
+for _name, _metric, _desc in _MOS_SPECS:
+    register(
+        RegistryEntry(
+            name=_name,
+            kind="audio",
+            intrusive=False,
+            requires_download=True,
+            fn=_metric,
+            range=(1.0, 5.0),
+            higher_is_better=True,
+            description=_desc,
         )
     )
 
