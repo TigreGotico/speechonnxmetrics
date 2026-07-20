@@ -6,8 +6,8 @@ Resolution rules used by the metric adapters:
 2. an ``http(s)://`` URL (downloaded once and cached);
 3. a ``(hf_repo, filename)`` pair -> HuggingFace download pinned by revision.
 
-Downloads are cached under ``$XDG_DATA_HOME/speechmetrics``
-(``~/.local/share/speechmetrics``).
+Downloads are cached under ``$XDG_DATA_HOME/speechonnxmetrics``
+(``~/.local/share/speechonnxmetrics``).
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def xdg_data_home() -> str:
 
 
 def get_cache_dir(cache_dir: Optional[str] = None) -> str:
-    path = cache_dir or os.path.join(xdg_data_home(), "speechmetrics")
+    path = cache_dir or os.path.join(xdg_data_home(), "speechonnxmetrics")
     os.makedirs(path, exist_ok=True)
     return path
 

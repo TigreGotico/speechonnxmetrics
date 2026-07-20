@@ -9,5 +9,5 @@ jobs:
   release_preview:
     uses: OpenVoiceOS/gh-automations/.github/workflows/release-preview.yml@dev
     with:
-      package_name: 'speechmetrics'
-      version_file: 'speechmetrics/version.py'
+      package_name: 'speechonnxmetrics'
+      version_file: 'speechonnxmetrics/version.py'

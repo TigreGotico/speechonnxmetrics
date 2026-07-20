@@ -5,9 +5,9 @@ and torch-free at runtime.
 """
 from __future__ import annotations
 
-from speechmetrics._dsp.fbank import deltas, fbank, hamming, mel_banks
-from speechmetrics._dsp.resample import kaiser_resample
-from speechmetrics._dsp.stft import hamming_window, istft, stft, vorbis_window
+from speechonnxmetrics._dsp.fbank import deltas, fbank, hamming, mel_banks
+from speechonnxmetrics._dsp.resample import kaiser_resample
+from speechonnxmetrics._dsp.stft import hamming_window, istft, stft, vorbis_window
 
 __all__ = [
     "stft",

@@ -36,7 +36,7 @@ def hamming_window(win_length: int) -> np.ndarray:
     """``torch.hamming_window(n)`` — **periodic** by default (divisor ``n``, not ``n-1``).
 
     Distinct from the symmetric Hamming that Kaldi feature extraction uses
-    (:func:`speechmetrics._dsp.fbank.hamming`); the two differ by ~5e-3, which is enough to
+    (:func:`speechonnxmetrics._dsp.fbank.hamming`); the two differ by ~5e-3, which is enough to
     break perfect reconstruction and shift a model's input features.
     """
     n = np.arange(win_length, dtype=np.float64)

@@ -1,4 +1,4 @@
-# speechmetrics
+# speechonnxmetrics
 
 Unified **speech evaluation metrics** — no-reference MOS, intrusive (reference-based)
 signal metrics, ASR-based metrics, and speaker similarity — on top of numpy and
@@ -10,23 +10,23 @@ resampling) exist so far. Every metric below is *planned*, not shipped — do no
 any of them work until this note is removed.
 
 ```bash
-pip install speechmetrics
+pip install speechonnxmetrics
 ```
 
 Inference is intended to run entirely on onnxruntime, with no torch at runtime. Weights
-will download on first use and cache under `~/.local/share/speechmetrics`, pinned by
+will download on first use and cache under `~/.local/share/speechonnxmetrics`, pinned by
 revision, via the same `resolver` pattern as `audiosronnx`.
 
 ## Planned scope
 
-### No-reference MOS (`speechmetrics.mos`)
+### No-reference MOS (`speechonnxmetrics.mos`)
 - UTMOS
 - UTMOSv2
 - NISQA
 - SIGMOS
 - DNSMOS P.808 / P.835
 
-### Intrusive metrics (`speechmetrics.intrusive`)
+### Intrusive metrics (`speechonnxmetrics.intrusive`)
 Reference-based signal metrics, compared against a clean/target signal:
 - STOI / ESTOI
 - SI-SDR / SDR / SNR
@@ -37,10 +37,10 @@ Reference-based signal metrics, compared against a clean/target signal:
 - MSD (mel-spectral distortion)
 - Mel-L1
 
-### ASR-based metrics (`speechmetrics.asr`)
+### ASR-based metrics (`speechonnxmetrics.asr`)
 - WER, CER, MER, WIL, WIP
 
-### Speaker similarity (`speechmetrics.speaker`)
+### Speaker similarity (`speechonnxmetrics.speaker`)
 - Cosine similarity between speaker embeddings (backed by `speakeronnx`).
 
 ### Explicitly out of scope

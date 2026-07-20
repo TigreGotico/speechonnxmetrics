@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "speechmetrics"
+name = "speechonnxmetrics"
 dynamic = ["version"]
 description = "Unified speech evaluation metrics — MOS, intrusive, and ASR — on numpy + onnxruntime only"
 license = {text = "Apache-2.0"}
@@ -32,11 +32,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TigreGotico/speechmetrics"
-Repository = "https://github.com/TigreGotico/speechmetrics"
+Homepage = "https://github.com/TigreGotico/speechonnxmetrics"
+Repository = "https://github.com/TigreGotico/speechonnxmetrics"
 
 [project.scripts]
-speechmetrics = "speechmetrics.cli:main"
+speechonnxmetrics = "speechonnxmetrics.cli:main"
 
 [project.optional-dependencies]
 # test deps — scipy is a TEST-ONLY oracle for validating DSP primitives, never a
@@ -49,11 +49,11 @@ asr = ["onnx-asr"]
 vad = ["vadonnx"]
 
 [tool.setuptools.dynamic]
-version = {attr = "speechmetrics.version.__version__"}
+version = {attr = "speechonnxmetrics.version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["speechmetrics*"]
+include = ["speechonnxmetrics*"]
 
 [tool.setuptools.package-data]
-"speechmetrics" = ["data/*"]
+"speechonnxmetrics" = ["data/*"]

@@ -9,4 +9,4 @@ jobs:
   type_check:
     uses: OpenVoiceOS/gh-automations/.github/workflows/type-check.yml@dev
     with:
-      mypy_args: 'speechmetrics'
+      mypy_args: 'speechonnxmetrics'

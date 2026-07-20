@@ -17,7 +17,7 @@ jobs:
       PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
       MATRIX_TOKEN: ${{ secrets.MATRIX_TOKEN }}
     with:
-      version_file: 'speechmetrics/version.py'
+      version_file: 'speechonnxmetrics/version.py'
       publish_pypi: true
       propose_release: true
       notify_matrix: true
