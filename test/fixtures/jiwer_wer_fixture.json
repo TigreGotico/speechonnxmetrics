@@ -1,0 +1,242 @@
+{
+  "0": {
+    "ref": "hello world",
+    "hyp": "hello world",
+    "wer": 0.0,
+    "cer": 0.0,
+    "mer": 0.0,
+    "wil": 0.0
+  },
+  "1": {
+    "ref": "hello world",
+    "hyp": "hello there world",
+    "wer": 0.5,
+    "cer": 0.5454545454545454,
+    "mer": 0.3333333333333333,
+    "wil": 0.33333333333333337
+  },
+  "2": {
+    "ref": "hello world",
+    "hyp": "hello",
+    "wer": 0.5,
+    "cer": 0.5454545454545454,
+    "mer": 0.5,
+    "wil": 0.5
+  },
+  "3": {
+    "ref": "hello world",
+    "hyp": "world hello",
+    "wer": 1.0,
+    "cer": 0.7272727272727273,
+    "mer": 0.6666666666666666,
+    "wil": 0.75
+  },
+  "4": {
+    "ref": "hello world",
+    "hyp": "goodbye moon",
+    "wer": 1.0,
+    "cer": 1.0,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "5": {
+    "ref": "",
+    "hyp": "hello",
+    "wer": "ERROR:ValueError",
+    "cer": "ERROR:ValueError",
+    "mer": "ERROR:ValueError",
+    "wil": "ERROR:ValueError"
+  },
+  "6": {
+    "ref": "hello",
+    "hyp": "",
+    "wer": 1.0,
+    "cer": 1.0,
+    "mer": 1.0,
+    "wil": 1
+  },
+  "7": {
+    "ref": "hello",
+    "hyp": "hello",
+    "wer": 0.0,
+    "cer": 0.0,
+    "mer": 0.0,
+    "wil": 0.0
+  },
+  "8": {
+    "ref": "the cat sat on the mat",
+    "hyp": "the cat sat on the mat",
+    "wer": 0.0,
+    "cer": 0.0,
+    "mer": 0.0,
+    "wil": 0.0
+  },
+  "9": {
+    "ref": "the cat sat on the mat",
+    "hyp": "the dog sat on the mat",
+    "wer": 0.16666666666666666,
+    "cer": 0.13636363636363635,
+    "mer": 0.16666666666666666,
+    "wil": 0.30555555555555547
+  },
+  "10": {
+    "ref": "the cat sat on the mat",
+    "hyp": "the cat the cat sat on the mat",
+    "wer": 0.3333333333333333,
+    "cer": 0.36363636363636365,
+    "mer": 0.25,
+    "wil": 0.25
+  },
+  "11": {
+    "ref": "a a a a a",
+    "hyp": "a a a",
+    "wer": 0.4,
+    "cer": 0.4444444444444444,
+    "mer": 0.4,
+    "wil": 0.4
+  },
+  "12": {
+    "ref": "one two three four five",
+    "hyp": "five four three two one",
+    "wer": 0.8,
+    "cer": 0.6086956521739131,
+    "mer": 0.8,
+    "wil": 0.96
+  },
+  "13": {
+    "ref": "café naïve résumé",
+    "hyp": "cafe naive resume",
+    "wer": 1.0,
+    "cer": 0.23529411764705882,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "14": {
+    "ref": "café naïve résumé",
+    "hyp": "café naïve résumé",
+    "wer": 0.0,
+    "cer": 0.0,
+    "mer": 0.0,
+    "wil": 0.0
+  },
+  "15": {
+    "ref": "hello, world!",
+    "hyp": "hello world",
+    "wer": 1.0,
+    "cer": 0.15384615384615385,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "16": {
+    "ref": "Hello World",
+    "hyp": "hello world",
+    "wer": 1.0,
+    "cer": 0.18181818181818182,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "17": {
+    "ref": "HELLO WORLD",
+    "hyp": "hello world",
+    "wer": 1.0,
+    "cer": 0.9090909090909091,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "18": {
+    "ref": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+    "hyp": "word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word",
+    "wer": 0.0,
+    "cer": 0.0,
+    "mer": 0.0,
+    "wil": 0.0
+  },
+  "19": {
+    "ref": "w0 w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 w24 w25 w26 w27 w28 w29 w30 w31 w32 w33 w34 w35 w36 w37 w38 w39 w40 w41 w42 w43 w44 w45 w46 w47 w48 w49 w50 w51 w52 w53 w54 w55 w56 w57 w58 w59 w60 w61 w62 w63 w64 w65 w66 w67 w68 w69 w70 w71 w72 w73 w74 w75 w76 w77 w78 w79 w80 w81 w82 w83 w84 w85 w86 w87 w88 w89 w90 w91 w92 w93 w94 w95 w96 w97 w98 w99 w100 w101 w102 w103 w104 w105 w106 w107 w108 w109 w110 w111 w112 w113 w114 w115 w116 w117 w118 w119 w120 w121 w122 w123 w124 w125 w126 w127 w128 w129 w130 w131 w132 w133 w134 w135 w136 w137 w138 w139 w140 w141 w142 w143 w144 w145 w146 w147 w148 w149 w150 w151 w152 w153 w154 w155 w156 w157 w158 w159 w160 w161 w162 w163 w164 w165 w166 w167 w168 w169 w170 w171 w172 w173 w174 w175 w176 w177 w178 w179 w180 w181 w182 w183 w184 w185 w186 w187 w188 w189 w190 w191 w192 w193 w194 w195 w196 w197 w198 w199 w200 w201 w202 w203 w204 w205 w206 w207 w208 w209 w210 w211 w212 w213 w214 w215 w216 w217 w218 w219 w220 w221 w222 w223 w224 w225 w226 w227 w228 w229 w230 w231 w232 w233 w234 w235 w236 w237 w238 w239 w240 w241 w242 w243 w244 w245 w246 w247 w248 w249 w250 w251 w252 w253 w254 w255 w256 w257 w258 w259 w260 w261 w262 w263 w264 w265 w266 w267 w268 w269 w270 w271 w272 w273 w274 w275 w276 w277 w278 w279 w280 w281 w282 w283 w284 w285 w286 w287 w288 w289 w290 w291 w292 w293 w294 w295 w296 w297 w298 w299",
+    "hyp": "w1 w2 w3 w4 w5 w6 w7 w8 w9 w10 w11 w12 w13 w14 w15 w16 w17 w18 w19 w20 w21 w22 w23 w24 w25 w26 w27 w28 w29 w30 w31 w32 w33 w34 w35 w36 w37 w38 w39 w40 w41 w42 w43 w44 w45 w46 w47 w48 w49 w50 w51 w52 w53 w54 w55 w56 w57 w58 w59 w60 w61 w62 w63 w64 w65 w66 w67 w68 w69 w70 w71 w72 w73 w74 w75 w76 w77 w78 w79 w80 w81 w82 w83 w84 w85 w86 w87 w88 w89 w90 w91 w92 w93 w94 w95 w96 w97 w98 w99 w100 w101 w102 w103 w104 w105 w106 w107 w108 w109 w110 w111 w112 w113 w114 w115 w116 w117 w118 w119 w120 w121 w122 w123 w124 w125 w126 w127 w128 w129 w130 w131 w132 w133 w134 w135 w136 w137 w138 w139 w140 w141 w142 w143 w144 w145 w146 w147 w148 w149 w150 w151 w152 w153 w154 w155 w156 w157 w158 w159 w160 w161 w162 w163 w164 w165 w166 w167 w168 w169 w170 w171 w172 w173 w174 w175 w176 w177 w178 w179 w180 w181 w182 w183 w184 w185 w186 w187 w188 w189 w190 w191 w192 w193 w194 w195 w196 w197 w198 w199 w200 w201 w202 w203 w204 w205 w206 w207 w208 w209 w210 w211 w212 w213 w214 w215 w216 w217 w218 w219 w220 w221 w222 w223 w224 w225 w226 w227 w228 w229 w230 w231 w232 w233 w234 w235 w236 w237 w238 w239 w240 w241 w242 w243 w244 w245 w246 w247 w248 w249 w250 w251 w252 w253 w254 w255 w256 w257 w258 w259 w260 w261 w262 w263 w264 w265 w266 w267 w268 w269 w270 w271 w272 w273 w274 w275 w276 w277 w278 w279 w280 w281 w282 w283 w284 w285 w286 w287 w288 w289 w290 w291 w292 w293 w294 w295 w296 w297 w298 w299 w300",
+    "wer": 0.006666666666666667,
+    "cer": 0.005759539236861051,
+    "mer": 0.006644518272425249,
+    "wil": 0.006655555555555526
+  },
+  "20": {
+    "ref": "this is a test",
+    "hyp": "this is a test extra words here",
+    "wer": 0.75,
+    "cer": 1.2142857142857142,
+    "mer": 0.42857142857142855,
+    "wil": 0.4285714285714286
+  },
+  "21": {
+    "ref": "this is a test extra words here",
+    "hyp": "this is a test",
+    "wer": 0.42857142857142855,
+    "cer": 0.5483870967741935,
+    "mer": 0.42857142857142855,
+    "wil": 0.4285714285714286
+  },
+  "22": {
+    "ref": "repeated repeated repeated word",
+    "hyp": "repeated word",
+    "wer": 0.5,
+    "cer": 0.5806451612903226,
+    "mer": 0.5,
+    "wil": 0.5
+  },
+  "23": {
+    "ref": "i love natural language processing",
+    "hyp": "i luv natural language processing",
+    "wer": 0.2,
+    "cer": 0.058823529411764705,
+    "mer": 0.2,
+    "wil": 0.3599999999999999
+  },
+  "24": {
+    "ref": "she sells seashells by the seashore",
+    "hyp": "she sell sea shells by the seashore",
+    "wer": 0.5,
+    "cer": 0.05714285714285714,
+    "mer": 0.42857142857142855,
+    "wil": 0.6190476190476191
+  },
+  "25": {
+    "ref": "test",
+    "hyp": "testing",
+    "wer": 1.0,
+    "cer": 0.75,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "26": {
+    "ref": "a",
+    "hyp": "b",
+    "wer": 1.0,
+    "cer": 1.0,
+    "mer": 1.0,
+    "wil": 1.0
+  },
+  "27": {
+    "ref": "a b c",
+    "hyp": "c b a",
+    "wer": 0.6666666666666666,
+    "cer": 0.4,
+    "mer": 0.6666666666666666,
+    "wil": 0.8888888888888888
+  },
+  "28": {
+    "ref": "unicode 日本語 test",
+    "hyp": "unicode test",
+    "wer": 0.3333333333333333,
+    "cer": 0.25,
+    "mer": 0.3333333333333333,
+    "wil": 0.33333333333333337
+  },
+  "29": {
+    "ref": "emoji 😀 test case",
+    "hyp": "emoji test case",
+    "wer": 0.25,
+    "cer": 0.11764705882352941,
+    "mer": 0.25,
+    "wil": 0.25
+  }
+}
