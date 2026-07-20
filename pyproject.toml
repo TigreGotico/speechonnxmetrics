@@ -44,6 +44,8 @@ speechonnxmetrics = "speechonnxmetrics.cli:main"
 test = ["pytest", "pytest-cov", "scipy"]
 # offline model conversion scripts only (maintainer use); never a runtime dependency
 export = ["torch", "onnx"]
+# broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only)
+audio = ["soundfile"]
 speaker = ["speakeronnx"]
 asr = ["onnx-asr"]
 vad = ["vadonnx"]
