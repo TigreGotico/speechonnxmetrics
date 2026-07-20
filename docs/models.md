@@ -12,7 +12,7 @@ Licences differ per model, so check this before selecting metrics.
 | licence | metrics | what it means for you |
 |---|---|---|
 | **MIT** | `dnsmos`, `dnsmos_p808`, `sigmos`, `utmos` | Commercial use, redistribution and modification all permitted. Keep the attribution. |
-| **CC BY-NC-SA 4.0 — NonCommercial** | `nisqa` *(pending)* | **Commercial use is forbidden.** ShareAlike also applies: derivatives must carry the same licence. Only the NISQA *weights* are NC — its code is MIT. |
+| **CC BY-NC-SA 4.0 — NonCommercial** | `nisqa` | **Commercial use is forbidden.** ShareAlike also applies: derivatives must carry the same licence. Only the NISQA *weights* are NC — its code is MIT. |
 
 Only NISQA carries NonCommercial terms. If your use is commercial, every other metric
 here is safe and NISQA is not. This package makes no choice for you — it exposes the
@@ -27,11 +27,15 @@ metric and states the terms; selecting it is the downstream user's call.
 | `dnsmos_p808` | `TigreGotico/dnsmos-onnx` | `model_v8.onnx` | MIT | same | 16 kHz | single ITU-T P.808 crowdsourced-listening MOS, 1-5 |
 | `sigmos` | `TigreGotico/sigmos-onnx` | `model-sigmos_1697718653_41d092e8-epo-200.onnx` | MIT | [`microsoft/SIG-Challenge`](https://github.com/microsoft/SIG-Challenge) `ICASSP2024/sigmos/` | 48 kHz | ITU-T P.804 dimensions `col`, `disc`, `loud`, `noise`, `reverb`, `sig`, `ovrl`, each 1-5 |
 | `utmos` | `TigreGotico/utmos-onnx` | `utmos22_strong.onnx` | MIT | exported here from [`tarepan/SpeechMOS`](https://github.com/tarepan/SpeechMOS) `utmos22_strong`, itself a port of [`sarulab-speech/UTMOS22`](https://github.com/sarulab-speech/UTMOS22) | 16 kHz | single naturalness MOS, 1-5 |
-| `nisqa` **(pending)** | `TigreGotico/nisqa-onnx` | *export in progress* | code MIT, **weights CC BY-NC-SA 4.0 (NonCommercial)** | [`gabrielmittag/NISQA`](https://github.com/gabrielmittag/NISQA) `weights/nisqa.tar` | 48 kHz | `mos`, `noi`, `dis`, `col`, `loud`, each 1-5 |
+| `nisqa` | `TigreGotico/nisqa-onnx` | `nisqa.onnx` | code MIT, **weights CC BY-NC-SA 4.0 (NonCommercial)** | exported here from [`gabrielmittag/NISQA`](https://github.com/gabrielmittag/NISQA) `weights/nisqa.tar` (NISQAv2) | native, any rate | `mos`, `noi`, `dis`, `col`, `loud`, each 1-5 |
 
-NISQA is not yet registered as a metric — its ONNX export is still being produced and
-verified. It is kept in a separate repo precisely because its weights are the only
-NonCommercial artifact in the set.
+NISQA lives in its own HF repo because its weights are the only NonCommercial artifact
+in the set. Its output order is `mos`, `noi`, `dis`, `col`, `loud`, taken from
+`NISQA_lib.py`; the upstream `NISQA_DIM` class docstring lists coloration before
+discontinuity and is wrong.
+
+NISQA is also the only rate-adaptive metric: it never resamples, and derives its 10 ms
+mel hop and 20 ms window from the file's own sample rate, as the reference does.
 
 Unused DNSMOS sub-models are mirrored for completeness but are not wired to a metric:
 `sig.onnx` and `bak_ovr.onnx` are the older two-model P.835 split that
@@ -59,7 +63,9 @@ UTMOS carries its affine rescale inside the exported graph.
 
 Long audio is handled per model. DNSMOS scores 9.01 s windows at a 1 s hop and averages,
 tiling audio shorter than one window; SIGMOS and UTMOS score the whole utterance in one
-pass.
+pass. NISQA segments its mel spectrogram into 15-frame patches at a 4-frame hop and
+pools them inside the graph, so audio shorter than 15 mel frames is rejected rather
+than padded.
 
 ## Models deliberately absent
 
@@ -71,4 +77,5 @@ published numbers.
 ## Reproducing the UTMOS export
 
 `conversion/export_utmos.py` regenerates `utmos22_strong.onnx` from the torch.hub
-checkpoint. The other models are shipped as ONNX upstream and are mirrored verbatim.
+checkpoint. DNSMOS and SIGMOS are shipped as ONNX upstream and are mirrored verbatim;
+NISQA was exported from its PyTorch checkpoint at opset 17.

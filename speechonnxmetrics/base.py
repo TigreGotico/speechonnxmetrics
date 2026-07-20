@@ -56,7 +56,8 @@ class ModelEntry:
     revision: str | None = None
     license: str = ""
     #: native sample rate the model expects; input is resampled to this.
-    sample_rate: int = 16000
+    #: ``None`` means the model is rate-adaptive and audio is passed through untouched.
+    sample_rate: int | None = 16000
     description: str = ""
     #: model-specific extra fields (frontend params, output layout, …).
     extra: dict[str, Any] = field(default_factory=dict)
