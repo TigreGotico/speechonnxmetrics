@@ -4,7 +4,25 @@ Unified speech-evaluation metrics on numpy + onnxruntime. No torch at runtime; n
 MOS predictors run as exported ONNX graphs whose weights download from public
 HuggingFace repos on first use.
 
-## Where to go
+## Learning path (zero to hero)
+
+New here? Follow this order; each builds on the last.
+
+1. **[concepts.md](concepts.md)** — the mental model *before* the metric list: intrusive vs
+   non-intrusive, what MOS is and why we predict it, the intelligibility/quality/similarity
+   axes, sample-rate and alignment gotchas, and the golden rule.
+2. **[choosing.md](choosing.md)** — a task→metric decision guide: what to report for TTS,
+   enhancement, voice conversion, ASR, separation and verification, and when *not* to use a
+   metric.
+3. **[metric-guides/](metric-guides/)** — one teaching page per metric: verified history,
+   what it measures, range/direction, when to use it, and the exact call in this library.
+4. **[usage.md](usage.md)** and **[cli.md](cli.md)** — the API and command line once you
+   know what you want to compute.
+
+The **[examples/tutorials/](../examples/tutorials/)** series is the hands-on companion —
+seven numbered, runnable, heavily-narrated scripts that walk the same path with real audio.
+
+## Where to go (reference)
 
 - **[metrics.md](metrics.md)** — reference for every metric family: what each measures,
   its range and direction, reference requirement, sample-rate handling, paper citation,

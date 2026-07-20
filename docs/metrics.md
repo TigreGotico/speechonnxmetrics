@@ -1,5 +1,10 @@
 # Metrics reference
 
+> **New to these metrics?** This page is the terse lookup. For the teaching layer — history,
+> intuition, and when to use each one — start with [concepts.md](concepts.md) and
+> [choosing.md](choosing.md), then the per-metric guides linked below. A guide is linked from
+> each family heading here.
+
 Every metric registered in the package, grouped by family. Enumerate the live set with
 `speechonnxmetrics.list_metrics()` — the tables below are built from it. Ranges and
 directions come straight from the registry (`RegistryEntry.range`,
@@ -10,6 +15,8 @@ metrics (WER/CER/MER/WIL/WIP) compare strings and are called from
 `speechonnxmetrics.asr` directly.
 
 ## No-reference MOS
+
+Guides: [utmos](metric-guides/utmos.md) · [dnsmos + dnsmos_p808](metric-guides/dnsmos.md) · [sigmos](metric-guides/sigmos.md) · [nisqa](metric-guides/nisqa.md).
 
 Neural mean-opinion-score predictors. No reference signal; each downloads an ONNX model
 on first call (`requires_download=True`) and caches it. All are bounded 1–5, higher is
@@ -46,6 +53,8 @@ Papers:
 
 ## Intrusive (reference-based)
 
+Guides: [stoi + estoi](metric-guides/stoi-estoi.md) · [si_sdr + sdr + snr](metric-guides/si_sdr-sdr-snr.md) · [mcd](metric-guides/mcd.md) · [log_f0_rmse + vuv_error](metric-guides/pitch.md) · [lsd + msd + mel_l1](metric-guides/spectral.md).
+
 Pure-numpy signal metrics that compare a degraded signal against a clean reference. No
 download. Each requires `ref=` (`intrusive=True`); calling without a reference raises.
 Signature: `metric(deg, sr, *, ref, ref_sr=None)`. Length- and rate-matching policy is
@@ -79,6 +88,8 @@ Papers:
 
 ## ASR-based text metrics
 
+Guide: [wer + cer + mer + wil + wip](metric-guides/wer-family.md).
+
 Pure-numpy string comparisons — `kind="text"`, so not dispatched by `score()`. Signature:
 `metric(reference, hypothesis, normalizer=None)`, accepting a single string or a list of
 strings (corpus). Normalization is opt-in: scoring never normalizes on its own. An empty
@@ -105,6 +116,8 @@ do not use it for new code. Build your own with the `Normalizer` chain and the e
 step functions (`lowercase`, `strip_punctuation`, `remove_diacritics`, …).
 
 ## Speaker similarity and verification
+
+Guides: [speaker_similarity](metric-guides/speaker-similarity.md) · [eer + min_dcf](metric-guides/eer-min_dcf.md).
 
 `speechonnxmetrics.speaker` (not in the `score()` registry):
 
