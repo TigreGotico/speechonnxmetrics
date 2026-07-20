@@ -59,3 +59,8 @@ include = ["speechonnxmetrics*"]
 
 [tool.setuptools.package-data]
 "speechonnxmetrics" = ["data/*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "models: needs the ONNX weights; skipped when they are neither cached nor downloadable",
+]
