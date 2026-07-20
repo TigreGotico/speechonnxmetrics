@@ -6,11 +6,14 @@ Signal Processing. The defining constant ``10/ln(10) * sqrt(2)`` converts a Eucl
 distance in the mel-cepstral domain into a base-10 log-power distortion in dB.
 
 Mel-cepstral coefficients are derived from the shared log-mel spectrogram
-(:func:`speechonnxmetrics._dsp.mel.log_melspectrogram`) via an orthonormal DCT-II
-along the mel-frequency axis — the standard "DCT of the log-mel spectrum" cepstral
-recipe used in MFCC extraction. The DCT-II is a few lines and specific to this
-cepstral computation, not a general DSP primitive, so it stays local to this module
-rather than joining ``_dsp``.
+(:func:`speechonnxmetrics._dsp.mel.log_melspectrogram`) via the mel-cepstral cosine
+transform along the mel-frequency axis — the ``(2/M)``-scaled Fourier cosine
+coefficients ``c_d = (2/M) sum_m log_mel_m cos(pi d (m+0.5)/M)`` (with ``c_0`` halved
+to ``(1/M) sum_m log_mel_m``). This is the coefficient definition the MCD constant
+``10/ln(10) * sqrt(2)`` is derived for; an orthonormal DCT-II would carry an extra
+``sqrt(M/2)`` factor per coefficient and inflate the distortion by that factor. The
+transform is a few lines and specific to this cepstral computation, not a general DSP
+primitive, so it stays local to this module rather than joining ``_dsp``.
 
 ``log_f0_rmse`` and ``vuv_error`` are built on the shared YIN tracker
 (:func:`speechonnxmetrics._dsp.pitch.yin`).
@@ -30,21 +33,25 @@ _MCD_CONST = 10.0 / np.log(10.0) * np.sqrt(2.0)
 AlignMode = Literal["dtw", "frame"]
 
 
-def _dct2_ortho(x: np.ndarray) -> np.ndarray:
-    """Orthonormal DCT-II along axis 0 of ``x`` (``[n_mels, frames]``); matches
-    ``scipy.fft.dct(x, type=2, norm="ortho", axis=0)``."""
+def _mel_cepstrum_dct(x: np.ndarray) -> np.ndarray:
+    """Mel-cepstral cosine transform along axis 0 of ``x`` (``[n_mels, frames]``).
+
+    Returns the ``(2/M)``-scaled Fourier cosine coefficients
+    ``c_d = (2/M) sum_m x_m cos(pi d (m+0.5)/M)`` for ``d = 0..M-1``, with ``c_0``
+    halved so it is the mean ``(1/M) sum_m x_m`` (log energy). These are the standard
+    mel-cepstral coefficients the MCD constant is defined for — an orthonormal DCT-II
+    would scale each ``d >= 1`` coefficient by an extra ``sqrt(M/2)`` and inflate MCD."""
     n = x.shape[0]
     k = np.arange(n)[:, None]
     m = np.arange(n)[None, :]
-    basis = np.cos(np.pi / n * (m + 0.5) * k)
-    basis[0, :] *= 1.0 / np.sqrt(2.0)
-    basis *= np.sqrt(2.0 / n)
+    basis = np.cos(np.pi / n * (m + 0.5) * k) * (2.0 / n)
+    basis[0, :] *= 0.5
     return basis @ x
 
 
 def _mel_cepstra(audio: np.ndarray, sr: int, n_mels: int, n_mfcc: int, n_fft: int, hop_size: int) -> np.ndarray:
     log_mel = log_melspectrogram(audio, sr, n_fft=n_fft, hop_size=hop_size, n_mels=n_mels)
-    return _dct2_ortho(log_mel.astype(np.float64))[:n_mfcc]  # [n_mfcc, frames]
+    return _mel_cepstrum_dct(log_mel.astype(np.float64))[:n_mfcc]  # [n_mfcc, frames]
 
 
 def mcd(

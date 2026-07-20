@@ -283,13 +283,52 @@ class TestMCD:
     def test_known_reference_pair_value(self):
         # A one-semitone pitch shift is a small, stable spectral-envelope perturbation
         # relative to the gross spectral mismatch of additive white noise at 0 dB SNR —
-        # a hand-verifiable ordering, not a literature-standard SPTK mcep magnitude
-        # (this module's MCEP comes from a DCT of the log-mel-STFT spectrogram, not a
-        # smoothed cepstral envelope, so its absolute scale is not directly comparable).
+        # a hand-verifiable ordering.
         x = _sine(220, 1.0)
         pitch_shifted = mcd(_sine(233.08, 1.0), SR, ref=x)
         noisy = mcd(_noisy(x, 0, 1), SR, ref=x)
         assert 0.0 < pitch_shifted < noisy
+
+    def test_fixture_pair_matches_reference_scale(self):
+        # Oracle: a real source clip vs its FAcodec resynthesis must land in the
+        # single-digit-to-low-teens dB band that trusted MCD implementations report on
+        # the same two wavs — pymcd (WORLD/SPTK mel-generalised cepstra, dtw) gives
+        # 6.50 dB and mel_cepstral_distance (a pure DCT-of-log-mel recipe like ours,
+        # M=20) gives 7.92 dB. Our 80-mel DCT frontend differs from both, so we match
+        # order of magnitude, not bit-parity. The tight bound below is a regression pin
+        # against the pre-fix orthonormal-DCT bug, which returned ~66 dB here.
+        deg = _read_fixture_wav("facodec_aria.wav")
+        ref = _read_fixture_wav("source.wav")
+        value = mcd(deg, FIXTURE_SR, ref=ref)
+        assert 4.0 < value < 14.0
+        assert value == pytest.approx(10.46, rel=0.02)
+
+    def test_amplitude_scale_invariance_and_c0_sensitivity(self):
+        # Real (full-scale) speech so the mel floor does not distort the comparison the
+        # way it would for near-silent synthetic tones. With c0 (log energy) excluded,
+        # MCD compares spectral shape and is ~invariant to a global amplitude scale
+        # applied to BOTH signals.
+        deg = _read_fixture_wav("facodec_aria.wav")
+        ref = _read_fixture_wav("source.wav")
+        base = mcd(deg, FIXTURE_SR, ref=ref)
+        assert mcd(1.5 * deg, FIXTURE_SR, ref=1.5 * ref) == pytest.approx(base, rel=0.05)
+        # With c0 included, scaling only ONE signal changes its energy coefficient and
+        # must move the result well beyond the two-sided-scale residual.
+        base_c0 = mcd(deg, FIXTURE_SR, ref=ref, include_c0=True)
+        both_c0 = mcd(1.5 * deg, FIXTURE_SR, ref=1.5 * ref, include_c0=True)
+        one_c0 = mcd(3.0 * deg, FIXTURE_SR, ref=ref, include_c0=True)
+        assert both_c0 == pytest.approx(base_c0, rel=0.05)
+        assert abs(one_c0 - base_c0) > 2.0
+
+    def test_monotonic_in_added_noise(self):
+        x = _speechlike(1.0, SR, 0)
+        rng = np.random.default_rng(3)
+        vals = [
+            mcd((x + lvl * rng.standard_normal(x.size).astype(np.float32)), SR, ref=x)
+            for lvl in (0.005, 0.02, 0.08, 0.3)
+        ]
+        assert vals == sorted(vals)
+        assert vals[0] < vals[-1]
 
     def test_noisier_signal_gives_larger_mcd(self):
         x = _speechlike(1.0, SR, 0)
