@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "speechmetrics"
+dynamic = ["version"]
+description = "Unified speech evaluation metrics — MOS, intrusive, and ASR — on numpy + onnxruntime only"
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Intended Audience :: Developers",
+]
+authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = [
+    "speech evaluation", "mos", "utmos", "nisqa", "dnsmos", "sigmos",
+    "stoi", "si-sdr", "mcd", "wer", "cer", "speaker similarity", "onnx",
+]
+dependencies = [
+    "numpy",
+    "onnxruntime>=1.17",
+    "huggingface_hub",
+]
+
+[project.urls]
+Homepage = "https://github.com/TigreGotico/speechmetrics"
+Repository = "https://github.com/TigreGotico/speechmetrics"
+
+[project.scripts]
+speechmetrics = "speechmetrics.cli:main"
+
+[project.optional-dependencies]
+# test deps — scipy is a TEST-ONLY oracle for validating DSP primitives, never a
+# runtime dependency
+test = ["pytest", "pytest-cov", "scipy"]
+# offline model conversion scripts only (maintainer use); never a runtime dependency
+export = ["torch", "onnx"]
+speaker = ["speakeronnx"]
+asr = ["onnx-asr"]
+vad = ["vadonnx"]
+
+[tool.setuptools.dynamic]
+version = {attr = "speechmetrics.version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["speechmetrics*"]
+
+[tool.setuptools.package-data]
+"speechmetrics" = ["data/*"]
