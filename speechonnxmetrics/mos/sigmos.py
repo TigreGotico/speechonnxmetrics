@@ -23,6 +23,9 @@ WINDOW_LENGTH = 960
 COMPRESS_FACTOR = 0.3
 
 HF_REPO = "TigreGotico/sigmos-onnx"
+#: pinned immutable commit SHA — an upstream model update must never silently
+#: change scores; bump deliberately, in its own commit, if the weights change.
+HF_REVISION = "33ccd4fca5b8ffe03828530753f0b35769b8e880"
 
 #: Output order of the seven heads, fixed by the released estimator.
 DIMENSIONS = ("col", "disc", "loud", "noise", "reverb", "sig", "ovrl")
@@ -77,6 +80,7 @@ class SIGMOS(OnnxMetric):
             alias="sigmos",
             hf_repo=HF_REPO,
             hf_file="model-sigmos_1697718653_41d092e8-epo-200.onnx",
+            revision=HF_REVISION,
             license="MIT",
             sample_rate=SR,
             description="SIGMOS P.804 seven-dimension quality predictor",

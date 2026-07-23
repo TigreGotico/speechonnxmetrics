@@ -18,6 +18,9 @@ from speechonnxmetrics.base import ModelEntry, OnnxMetric, Score
 
 SR = 16000
 HF_REPO = "TigreGotico/utmos-onnx"
+#: pinned immutable commit SHA — an upstream model update must never silently
+#: change scores; bump deliberately, in its own commit, if the weights change.
+HF_REVISION = "ff41b8f440cb12ecda18261f9ff7326d058275ce"
 
 #: Receptive field of the wav2vec2 convolutional feature extractor. Anything shorter
 #: produces no frames at all and makes the graph fail inside a Conv node, so shorter
@@ -38,6 +41,7 @@ class UTMOS(OnnxMetric):
             alias="utmos",
             hf_repo=HF_REPO,
             hf_file="utmos22_strong.onnx",
+            revision=HF_REVISION,
             license="MIT",
             sample_rate=SR,
             description="UTMOS22 strong-learner naturalness MOS predictor",

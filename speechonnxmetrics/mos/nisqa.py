@@ -20,6 +20,9 @@ from speechonnxmetrics._dsp.mel import melspectrogram
 from speechonnxmetrics.base import ModelEntry, OnnxMetric, Score
 
 HF_REPO = "TigreGotico/nisqa-onnx"
+#: pinned immutable commit SHA — an upstream model update must never silently
+#: change scores; bump deliberately, in its own commit, if the weights change.
+HF_REVISION = "3de0221b7bb4919dc2ba9a891da7fba76b06e573"
 
 #: Mel frontend, as the checkpoint's own ``args`` define it. The hop and window are
 #: given in *seconds* upstream and derived per file from its native rate, so NISQA
@@ -108,6 +111,7 @@ class NISQA(OnnxMetric):
             alias="nisqa",
             hf_repo=HF_REPO,
             hf_file="nisqa.onnx",
+            revision=HF_REVISION,
             license="CC BY-NC-SA 4.0 (NonCommercial; NISQA's code is MIT)",
             sample_rate=None,
             description="NISQA-v2 five-dimension quality predictor (NonCommercial weights)",

@@ -27,6 +27,10 @@ INPUT_LENGTH = 9.01
 WINDOW_SAMPLES = int(INPUT_LENGTH * SR)  # 144160
 
 HF_REPO = "TigreGotico/dnsmos-onnx"
+#: pinned immutable commit SHA — an upstream model update must never silently
+#: change scores; bump deliberately, in its own commit, if the weights change.
+#: Shared by both DNSMOS variants (P.835 and P.808) — one repo, one revision.
+HF_REVISION = "27691a53aa069b27be6ac957013d43b3c442da9d"
 
 #: Cubic/quadratic score-fitting polynomials mapping raw network outputs onto the
 #: MOS scale, in ``np.poly1d`` (highest-order-first) order. Omitting these leaves
@@ -85,6 +89,7 @@ class DNSMOS(OnnxMetric):
                 "personalized/pdnsmos_sig_bak_ovr.onnx" if personalized
                 else "sig_bak_ovr.onnx"
             ),
+            revision=HF_REVISION,
             license="MIT",
             sample_rate=SR,
             description="DNSMOS P.835 sig/bak/ovrl predictor",
@@ -127,6 +132,7 @@ class DNSMOSP808(OnnxMetric):
             alias="dnsmos_p808",
             hf_repo=HF_REPO,
             hf_file="model_v8.onnx",
+            revision=HF_REVISION,
             license="MIT",
             sample_rate=SR,
             description="DNSMOS P.808 MOS predictor",
