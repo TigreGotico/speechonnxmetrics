@@ -94,6 +94,17 @@ class OnnxMetric(abc.ABC):
     def sample_rate(self) -> int | None:
         return self.model.sample_rate
 
+    @property
+    def model_info(self) -> dict[str, str | None]:
+        """Provenance of the backing ONNX model: ``repo_id``, ``filename`` and the
+        pinned ``revision``. Downstream evaluators can record this per prediction row
+        so a judge's exact weights are always reproducible from a result set alone."""
+        return {
+            "repo_id": self.model.hf_repo,
+            "filename": self.model.hf_file,
+            "revision": self.model.revision,
+        }
+
     # ------------------------------------------------------------------ #
     # session management
     # ------------------------------------------------------------------ #

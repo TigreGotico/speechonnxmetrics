@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -85,6 +86,52 @@ def _stub(metric, outputs, input_names=("input",)):
     session = StubSession(outputs, input_names)
     metric._session = session
     return session
+
+
+# ------------------------------------------------------------------ #
+# revision pinning — every downloaded model must be pinned to an immutable
+# commit SHA, never a mutable branch/tag: an upstream update to a model repo
+# must never silently change scores already reported. No network access.
+# ------------------------------------------------------------------ #
+
+_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+@pytest.mark.parametrize(
+    "metric_cls,kwargs",
+    [
+        (DNSMOS, {}),
+        (DNSMOS, {"personalized": True}),
+        (DNSMOSP808, {}),
+        (SIGMOS, {}),
+        (UTMOS, {}),
+        (NISQA, {}),
+    ],
+)
+def test_mos_model_entry_is_pinned_to_a_commit_sha(metric_cls, kwargs):
+    metric = metric_cls(**kwargs)
+    revision = metric.model.revision
+    assert revision is not None, f"{metric.name} has no pinned revision"
+    assert _SHA_RE.match(revision), f"{metric.name} revision {revision!r} is not a 40-hex-char commit SHA"
+
+
+def test_registry_mos_metrics_are_all_pinned():
+    for entry in registry.list_metrics(requires_download=True):
+        model = entry.fn.model  # each registered MOS metric is an OnnxMetric instance
+        revision = model.revision
+        assert revision is not None, f"{entry.name} has no pinned revision"
+        assert _SHA_RE.match(revision), f"{entry.name} revision {revision!r} is not a 40-hex-char commit SHA"
+
+
+def test_model_info_exposes_provenance():
+    metric = UTMOS()
+    info = metric.model_info
+    assert info == {
+        "repo_id": "TigreGotico/utmos-onnx",
+        "filename": "utmos22_strong.onnx",
+        "revision": metric.model.revision,
+    }
+    assert _SHA_RE.match(info["revision"])
 
 
 # ------------------------------------------------------------------ #

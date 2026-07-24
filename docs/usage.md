@@ -142,6 +142,8 @@ is created lazily on the **first call**.
   fully offline.
 - **Which metrics download:** exactly the ones with `requires_download=True` — the five
   MOS predictors. Every intrusive and text metric is pure numpy and never downloads.
+- **Provenance:** every `OnnxMetric` exposes `.model_info` (`repo_id`, `filename`,
+  `revision`) so callers can record exactly which pinned weights produced a score.
 
 ```python
 # pre-fetch every downloadable model, then run offline
