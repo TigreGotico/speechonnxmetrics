@@ -2,8 +2,8 @@
 
 ## `score` vs `score_batch`
 
-`score` handles one item; `score_batch` handles many. Both return the same per-item
-flat dict — `score` is a thin wrapper over `score_batch([audio], ...)[0]`.
+`score` handles one item. `score_batch` handles many. Both return the same per-item
+flat dict. `score` is a thin wrapper over `score_batch([audio], ...)[0]`.
 
 ```python
 import speechonnxmetrics as s
@@ -22,24 +22,24 @@ score(audio, metrics, ref=None, sr=None) -> dict[str, Any]
 score_batch(audios, metrics, refs=None, sr=None) -> list[dict[str, Any]]
 ```
 
-- `audio`/`audios` — path, bytes, or a numpy array. `sr` is a sample-rate hint used when
+- `audio`/`audios`: path, bytes, or a numpy array. `sr` is a sample-rate hint used when
   the input is a raw array or headerless.
-- `metrics` — a sequence of registered **audio** metric names (case-insensitive).
+- `metrics`: a sequence of registered **audio** metric names (case-insensitive).
   Duplicate names, an empty list, or a text-metric name raise `ValueError`.
-- `ref`/`refs` — reference audio, required when any requested metric is intrusive.
+- `ref`/`refs`: reference audio, required when any requested metric is intrusive.
   `refs` must match `audios` in length.
 
 ### Why `score_batch` is the hot path
 
 Each metric name is resolved from the registry **once** and reused across every item.
 For an ONNX-backed MOS metric that means the onnxruntime session is built on the first
-item and every later item reuses it — you do not pay session setup per clip. Over an
+item and every later item reuses it, so you do not pay session setup per clip. Over an
 eval of thousands of clips that is the difference between one model load and thousands.
 
-It also isolates failures. A metric that raises on one item — a corrupt file, audio too
-short for NISQA — records `None` for that item's value and the exception message under
-`"_errors"`, and the batch keeps running. A single bad file cannot sink an hours-long
-run.
+It also isolates failures. A metric that raises on one item, such as a corrupt file or
+audio too short for NISQA, records `None` for that item's value and the exception
+message under `"_errors"`, and the batch keeps running. A single bad file cannot sink an
+hours-long run.
 
 ```python
 results = s.score_batch(["ok.wav", "corrupt.wav"], ["utmos"])
@@ -51,7 +51,7 @@ load error recorded.
 
 ## Output shape
 
-Results are a **flat dict of floats**. Scalar metrics map name → value; dict-valued
+Results are a **flat dict of floats**. Scalar metrics map name to value. Dict-valued
 metrics (multi-head models) are flattened with a dotted prefix:
 
 ```python
@@ -119,28 +119,28 @@ register(RegistryEntry(
 s.score("clip.wav", ["rms_dbfs"])   # {'rms_dbfs': -20.73...}
 ```
 
-For an ONNX-backed metric, subclass `OnnxMetric` instead: set the class attributes,
-provide a `ModelEntry`, and implement `_frontend` (audio → input feed) and
-`_postprocess` (outputs → score). The base handles lazy, thread-safe session creation,
-resampling to `ModelEntry.sample_rate`, and download resolution — see
+For an ONNX-backed metric, subclass `OnnxMetric` instead. Set the class attributes,
+provide a `ModelEntry`, and implement `_frontend` (audio to input feed) and
+`_postprocess` (outputs to score). The base handles lazy, thread-safe session creation,
+resampling to `ModelEntry.sample_rate`, and download resolution. See
 `speechonnxmetrics/mos/` for worked subclasses. A full runnable example is in
 [`../examples/custom_metric.py`](../examples/custom_metric.py).
 
 ## Model cache and offline behaviour
 
 `import speechonnxmetrics` touches neither the network nor onnxruntime. Constructing a
-MOS metric also downloads nothing — the onnxruntime session, and therefore the download,
+MOS metric also downloads nothing. The onnxruntime session, and therefore the download,
 is created lazily on the **first call**.
 
-- **Where weights land:** `$XDG_DATA_HOME/speechonnxmetrics` (i.e.
-  `~/.local/share/speechonnxmetrics` by default), fetched via `huggingface_hub` from the
-  per-model HF repos listed in [models.md](models.md), pinned by revision.
-- **HF cache:** the download goes through `huggingface_hub`, so `HF_HOME` /
+- **Where weights land:** `$XDG_DATA_HOME/speechonnxmetrics` (that is,
+  `~/.local/share/speechonnxmetrics` by default), fetched through `huggingface_hub` from
+  the per-model HF repos listed in [models.md](models.md), pinned by revision.
+- **HF cache:** the download goes through `huggingface_hub`, so `HF_HOME` and
   `HF_HUB_OFFLINE` apply as usual for the fetch step.
-- **Pre-fetch:** call the metric once (e.g. `s.score(fixture, ["utmos","dnsmos","nisqa","sigmos"])`)
-  in a warm-up step to populate the cache before an offline run. After that, scoring runs
-  fully offline.
-- **Which metrics download:** exactly the ones with `requires_download=True` — the five
+- **Pre-fetch:** call the metric once (for example
+  `s.score(fixture, ["utmos","dnsmos","nisqa","sigmos"])`) in a warm-up step to populate
+  the cache before an offline run. After that, scoring runs fully offline.
+- **Which metrics download:** exactly the ones with `requires_download=True`, the five
   MOS predictors. Every intrusive and text metric is pure numpy and never downloads.
 - **Provenance:** every `OnnxMetric` exposes `.model_info` (`repo_id`, `filename`,
   `revision`) so callers can record exactly which pinned weights produced a score.
@@ -150,3 +150,6 @@ is created lazily on the **first call**.
 downloadable = [e.name for e in s.list_metrics(requires_download=True)]
 s.score("test/fixtures/audio/source.wav", downloadable)
 ```
+
+---
+[← Metrics](metrics.md) · [Home](index.md) · [CLI →](cli.md)

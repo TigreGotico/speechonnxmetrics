@@ -2,6 +2,8 @@
 
 Installing the package exposes a `speechonnxmetrics` console script (entry point
 `speechonnxmetrics.cli:main`). Without installing, run `python -m speechonnxmetrics.cli`.
+The tool has two subcommands, `score` and `list`, described below with their exact
+help text and real example invocations against the bundled fixture audio.
 
 ```
 $ speechonnxmetrics --help
@@ -36,14 +38,12 @@ options:
   --json             emit JSON instead of a table
 ```
 
-- `--metrics` is required; comma-separated audio metric names (text metrics are not
-  scored here). `--ref` is required when any chosen metric is intrusive, and is applied
-  to every positional `audio` argument.
-- Output is a table by default, one row per file with a column per (flattened) metric
-  key; `--json` emits a `{path: result}` object instead.
-- Exit status is `1` on a resolution error (unknown/duplicate/empty metric, missing
-  `--ref`) or when any item recorded a per-file `_errors` entry; the successful rows are
-  still printed and the errors go to stderr.
+- `--metrics` takes comma-separated audio metric names. Text metrics are not scored here.
+- `--ref` is required when any chosen metric is intrusive, and applies to every positional `audio` argument.
+- Output is a table by default, one row per file, one column per flattened metric key.
+- `--json` emits a `{path: result}` object instead of a table.
+- Exit status is `1` on a resolution error, or when any item recorded a per-file `_errors` entry.
+- On a partial error, successful rows still print and errors go to stderr.
 
 ### Examples
 
@@ -106,3 +106,6 @@ wip          text   True       False
 
 `--json` emits the same rows as an array of `{name, kind, intrusive, requires_download}`
 objects.
+
+---
+[← Usage](usage.md) · [Home](index.md) · [Models →](models.md)
