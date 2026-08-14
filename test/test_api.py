@@ -136,3 +136,64 @@ def test_mismatched_audios_and_refs_length_raises():
 def test_score_batch_with_real_intrusive_metric():
     results = score_batch([SOURCE_WAV], ["stoi"], refs=[SOURCE_WAV])
     assert results[0]["stoi"] == pytest.approx(1.0, abs=1e-6)
+
+
+# ---------------------------------------------------------------------- #
+# providers= threading and per-providers session caching
+# ---------------------------------------------------------------------- #
+import speechonnxmetrics.api as api  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _clear_providers_cache():
+    yield
+    api._providers_cache.clear()
+
+
+def test_score_batch_providers_binds_onnx_metric_to_a_clone(register_fake):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    score_batch([SOURCE_WAV], ["fake_counting"], providers=["CPUExecutionProvider"])
+    assert metric.creations == 0  # the original singleton was never touched
+    cached = api._providers_cache[("fake_counting", ("CPUExecutionProvider",))]
+    assert cached is not metric
+    assert cached.creations == 1
+
+
+def test_score_batch_providers_none_uses_original_instance(register_fake):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    score_batch([SOURCE_WAV], ["fake_counting"])
+    assert metric.creations == 1
+    assert api._providers_cache == {}
+
+
+def test_score_batch_providers_cache_reused_across_calls(register_fake):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    score_batch([SOURCE_WAV], ["fake_counting"], providers=["CPUExecutionProvider"])
+    score_batch([SOURCE_WAV], ["fake_counting"], providers=["CPUExecutionProvider"])
+    cached = api._providers_cache[("fake_counting", ("CPUExecutionProvider",))]
+    assert cached.creations == 1  # reused, not rebuilt on the second call
+
+
+def test_score_batch_different_providers_get_different_cache_entries(register_fake):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    score_batch([SOURCE_WAV], ["fake_counting"], providers=["CPUExecutionProvider"])
+    score_batch([SOURCE_WAV], ["fake_counting"], providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+    assert len(api._providers_cache) == 2
+
+
+def test_score_providers_arg_threads_through_to_score_batch(register_fake):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    score(SOURCE_WAV, ["fake_counting"], providers=["CPUExecutionProvider"])
+    assert ("fake_counting", ("CPUExecutionProvider",)) in api._providers_cache
+    assert metric.creations == 0
+
+
+def test_score_batch_providers_ignored_for_non_onnx_metric():
+    results = score_batch([SOURCE_WAV], ["stoi"], refs=[SOURCE_WAV], providers=["CUDAExecutionProvider"])
+    assert results[0]["stoi"] == pytest.approx(1.0, abs=1e-6)
+    assert api._providers_cache == {}
