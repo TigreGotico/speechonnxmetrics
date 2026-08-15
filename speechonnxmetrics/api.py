@@ -13,14 +13,22 @@ must not sink an hours-long eval run.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any, Sequence
 
 from speechonnxmetrics._dsp.audio import AudioLoadError, load_audio
+from speechonnxmetrics.base import OnnxMetric
 from speechonnxmetrics.registry import RegistryEntry
 from speechonnxmetrics.registry import get as _get_entry
 from speechonnxmetrics.registry import list_metrics as list_metrics  # noqa: F401 (re-export)
 
 AudioLike = Any
+
+#: providers-bound clones of ONNX-backed registry metrics, keyed by
+#: ``(metric name, providers tuple)`` — mirrors the registry's one-instance-per-metric
+#: pattern so a given ``providers=...`` call reuses its session across a whole batch
+#: (and across calls) instead of rebuilding it every time.
+_providers_cache: dict[tuple[str, tuple[str, ...]], OnnxMetric] = {}
 
 
 def _resolve(names: Sequence[str]) -> list[RegistryEntry]:
@@ -40,6 +48,28 @@ def _resolve(names: Sequence[str]) -> list[RegistryEntry]:
     return entries
 
 
+def _bind_providers(entries: list[RegistryEntry], providers: Sequence[str] | None) -> list[RegistryEntry]:
+    """Rebind each ONNX-backed entry in ``entries`` to a ``providers``-specific metric
+    instance. Non-ONNX metrics (the pure-numpy intrusive ones) are untouched — they
+    have no session/providers to bind. A no-op when ``providers`` is ``None``, which
+    leaves every metric on its default (env-var-resolved) providers."""
+    if providers is None:
+        return entries
+    key_providers = tuple(providers)
+    bound = []
+    for entry in entries:
+        if not isinstance(entry.fn, OnnxMetric):
+            bound.append(entry)
+            continue
+        cache_key = (entry.name, key_providers)
+        metric = _providers_cache.get(cache_key)
+        if metric is None:
+            metric = entry.fn._with_providers(providers)
+            _providers_cache[cache_key] = metric
+        bound.append(replace(entry, fn=metric))
+    return bound
+
+
 def _flatten(name: str, value: float | dict[str, float]) -> dict[str, float]:
     if isinstance(value, dict):
         return {f"{name}.{k}": v for k, v in value.items()}
@@ -55,6 +85,7 @@ def score_batch(
     metrics: Sequence[str],
     refs: Sequence[AudioLike] | None = None,
     sr: int | None = None,
+    providers: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Score every item in ``audios`` against every metric in ``metrics``.
 
@@ -63,10 +94,16 @@ def score_batch(
     the first item and reused for the rest. A metric that raises on a given item does
     not abort the batch: that item's value for that metric is ``None`` and the
     exception message is recorded under ``"_errors"`` in the item's result dict.
+
+    ``providers`` overrides the onnxruntime execution providers (e.g.
+    ``["CUDAExecutionProvider", "CPUExecutionProvider"]``) for every ONNX-backed metric
+    in this call, taking precedence over the ``SPEECHONNXMETRICS_PROVIDERS`` env var
+    described in :mod:`speechonnxmetrics.base`. Leave it ``None`` to use each metric's
+    default. Non-ONNX metrics (the pure-numpy intrusive ones) ignore it.
     """
     if refs is not None and len(refs) != len(audios):
         raise ValueError(f"refs ({len(refs)}) and audios ({len(audios)}) must have the same length")
-    entries = _resolve(metrics)
+    entries = _bind_providers(_resolve(metrics), providers)
     for entry in entries:
         if entry.intrusive and refs is None:
             raise ValueError(f"metric {entry.name!r} is intrusive and requires refs=...")
@@ -101,9 +138,14 @@ def score_batch(
 
 
 def score(
-    audio: AudioLike, metrics: Sequence[str], ref: AudioLike | None = None, sr: int | None = None,
+    audio: AudioLike,
+    metrics: Sequence[str],
+    ref: AudioLike | None = None,
+    sr: int | None = None,
+    providers: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Score a single ``audio`` item against every metric in ``metrics``. See
-    :func:`score_batch` for the batch form used by eval loops."""
+    :func:`score_batch` for the batch form used by eval loops, and for what
+    ``providers`` does."""
     refs = [ref] if ref is not None else None
-    return score_batch([audio], metrics, refs=refs, sr=sr)[0]
+    return score_batch([audio], metrics, refs=refs, sr=sr, providers=providers)[0]

@@ -115,6 +115,27 @@ rate-adaptive and never resamples. See [`docs/metrics.md`](docs/metrics.md) for 
 per-metric detail and paper citations, and [`docs/models.md`](docs/models.md) for the
 ONNX models and their licences.
 
+## GPU inference
+
+The ONNX-backed metrics (the MOS predictors, speaker similarity) run on
+`CPUExecutionProvider` by default. To run them on GPU, install `onnxruntime-gpu`
+(instead of, or alongside, `onnxruntime`) with the matching CUDA/cuDNN setup, then
+pick one of two knobs:
+
+* **`SPEECHONNXMETRICS_PROVIDERS`** — a comma-separated onnxruntime provider list,
+  e.g. `SPEECHONNXMETRICS_PROVIDERS=CUDAExecutionProvider,CPUExecutionProvider`. This
+  is the knob that matters for batch pipelines and the CLI, which have no
+  `providers=` argument to thread through — set the env var once and every ONNX
+  session in the process picks it up with no code change.
+* **`providers=`** — pass it explicitly to `score()`/`score_batch()`, or to an
+  `OnnxMetric` subclass's constructor, when a given call needs providers different
+  from the process default. An explicit `providers=` always wins over the env var.
+
+Either way, a provider that onnxruntime does not have built in (or that fails to
+initialize) is silently dropped rather than raised: the requested list is intersected
+with `onnxruntime.get_available_providers()`, and `CPUExecutionProvider` is always
+kept as the final fallback so scoring never crashes for lack of a GPU.
+
 ## CLI
 
 ```

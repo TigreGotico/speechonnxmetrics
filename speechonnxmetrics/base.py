@@ -13,6 +13,8 @@ session is created lazily, behind a lock, on first use.
 from __future__ import annotations
 
 import abc
+import copy
+import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -25,6 +27,34 @@ from speechonnxmetrics._dsp.resample import kaiser_resample
 
 AudioLike = Union[str, Path, bytes, np.ndarray]
 Score = Union[float, dict[str, float]]
+
+#: onnxruntime execution providers used when nothing else is requested.
+DEFAULT_PROVIDERS = ["CPUExecutionProvider"]
+#: comma-separated provider list, e.g. ``"CUDAExecutionProvider,CPUExecutionProvider"``.
+#: The zero-code-change knob for batch pipelines: :meth:`OnnxMetric.__init__` leaves
+#: ``providers`` unresolved when the caller passes ``None``, and this env var is read
+#: at session-build time instead — so switching a pipeline to GPU never means touching
+#: the code that calls ``score()``/``score_batch()``.
+PROVIDERS_ENV_VAR = "SPEECHONNXMETRICS_PROVIDERS"
+
+
+def _env_providers() -> list[str]:
+    """Parse :data:`PROVIDERS_ENV_VAR`; falls back to :data:`DEFAULT_PROVIDERS` when
+    the variable is unset or empty."""
+    raw = os.environ.get(PROVIDERS_ENV_VAR, "")
+    providers = [p.strip() for p in raw.split(",") if p.strip()]
+    return providers or list(DEFAULT_PROVIDERS)
+
+
+def _resolve_providers(requested: Sequence[str], available: Sequence[str]) -> list[str]:
+    """Intersect ``requested`` with onnxruntime's ``available`` providers, preserving
+    ``requested`` order, and guarantee ``CPUExecutionProvider`` is present as the final
+    fallback — a misspelled or unbuilt provider (e.g. asking for CUDA on a CPU-only
+    onnxruntime install) must never crash session creation."""
+    resolved = [p for p in requested if p in available]
+    if "CPUExecutionProvider" not in resolved:
+        resolved.append("CPUExecutionProvider")
+    return resolved
 
 
 @runtime_checkable
@@ -85,7 +115,9 @@ class OnnxMetric(abc.ABC):
         cache_dir: str | None = None,
     ) -> None:
         self.model = model
-        self.providers = list(providers) if providers is not None else ["CPUExecutionProvider"]
+        #: ``None`` means "resolve from the environment at session-build time"; see
+        #: :func:`_env_providers`. An explicit list here always wins over the env var.
+        self.providers = list(providers) if providers is not None else None
         self.cache_dir = cache_dir
         self._session: Any = None
         self._lock = threading.Lock()
@@ -123,13 +155,26 @@ class OnnxMetric(abc.ABC):
 
         from speechonnxmetrics.resolver import resolve
 
+        requested = list(self.providers) if self.providers is not None else _env_providers()
+        providers = _resolve_providers(requested, ort.get_available_providers())
         path = resolve(
             self.model.hf_file,
             hf_repo=self.model.hf_repo,
             revision=self.model.revision,
             cache_dir=self.cache_dir,
         )
-        return ort.InferenceSession(path, providers=self.providers)
+        return ort.InferenceSession(path, providers=providers)
+
+    def _with_providers(self, providers: Sequence[str] | None) -> "OnnxMetric":
+        """Return a copy of this metric bound to ``providers``, with its own lazily
+        built session — used by :func:`speechonnxmetrics.score`/``score_batch`` to
+        score a single call on different providers without mutating (or racing) a
+        shared, module-wide singleton instance."""
+        clone = copy.copy(self)
+        clone.providers = list(providers) if providers is not None else None
+        clone._session = None
+        clone._lock = threading.Lock()
+        return clone
 
     def close(self) -> None:
         """Release the underlying onnxruntime session, if one was created."""
