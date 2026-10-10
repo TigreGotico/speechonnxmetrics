@@ -1,0 +1,110 @@
+[
+ {
+  "file": "pt-PT_0.wav",
+  "text": "As casas estão fechadas.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ɐʃ kˈazɐz ɨʃtˌɐ̃ʊ̃ fˌɨʃˈadɐʃ."
+ },
+ {
+  "file": "pt-PT_1.wav",
+  "text": "O leite está quente.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ʊ lˈeɪtɨ ɨʃtˌɐ kˈentɨ."
+ },
+ {
+  "file": "pt-PT_2.wav",
+  "text": "Tive de partir cedo.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "tˌivɨ dɨ pɐɾtˈiɾ sˈedʊ."
+ },
+ {
+  "file": "pt-PT_3.wav",
+  "text": "O papel é azul.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ʊ pɐpˈɛl ɛ ɐzˈul."
+ },
+ {
+  "file": "pt-PT_4.wav",
+  "text": "Os meninos comem pão.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "uʒ mˌenˈinʊʃ kˈomeɪm pˈɐ̃ʊ̃."
+ },
+ {
+  "file": "pt-PT_5.wav",
+  "text": "Mais tarde vamos dormir.",
+  "lect": "pt-PT",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "mˈaɪʃ tˈaɾdɨ vˌɐ̃mʊʒ duɾmˈiɾ."
+ },
+ {
+  "file": "pt-BR_0.wav",
+  "text": "As casas estão fechadas.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "as kˈazɐz estˌɐ̃ʊ̃ fˌeʃˈadɐs."
+ },
+ {
+  "file": "pt-BR_1.wav",
+  "text": "O leite está quente.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ʊ lˈeɪtʃj estˌa kˈẽntʃɪ."
+ },
+ {
+  "file": "pt-BR_2.wav",
+  "text": "Tive de partir cedo.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "tʃˌivɪ dʒɪ paɾtʃˈiɾ sˈedʊ."
+ },
+ {
+  "file": "pt-BR_3.wav",
+  "text": "O papel é azul.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ʊ papˈɛw ɛ azˈuw."
+ },
+ {
+  "file": "pt-BR_4.wav",
+  "text": "Os meninos comem pão.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "ʊz mˌenˈinʊs kˈomeɪm pˈɐ̃ʊ̃."
+ },
+ {
+  "file": "pt-BR_5.wav",
+  "text": "Mais tarde vamos dormir.",
+  "lect": "pt-BR",
+  "voice": "rhasspy/piper-voices@c10ece1aade47bb51c153c893d14e5bf8e5b7117:pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
+  "licence": "voice repo MIT; voice training data CC0; the voice is fine-tuned from the en_US lessac voice, trained on Blizzard 2013 Lessac data licensed for non-commercial research only, so whether this audio may be redistributed freely is unclear",
+  "length_scale": 1.5,
+  "espeak_phonemes": "mˈaɪs tˈaɾdʒɪ vˌɐ̃mʊz doɾmˈiɾ."
+ }
+]

@@ -24,6 +24,7 @@ requires-python = ">=3.10"
 keywords = [
     "speech evaluation", "mos", "utmos", "nisqa", "dnsmos", "sigmos",
     "stoi", "si-sdr", "mcd", "wer", "cer", "speaker similarity", "onnx",
+    "dialect", "accent", "phone recognition",
 ]
 dependencies = [
     "numpy",
@@ -41,7 +42,10 @@ speechonnxmetrics = "speechonnxmetrics.cli:main"
 [project.optional-dependencies]
 # test deps — scipy is a TEST-ONLY oracle for validating DSP primitives, never a
 # runtime dependency
-test = ["pytest", "pytest-cov", "scipy"]
+test = [
+    "pytest", "pytest-cov", "scipy",
+    "orthography2ipa[portuguese]>=7.109.0a2", "scriptconv>=0.0.3", "tugaphone>=1.4.1a2",
+]
 # offline model conversion scripts only (maintainer use); never a runtime dependency
 export = ["torch", "onnx"]
 # broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only)
@@ -49,6 +53,10 @@ audio = ["soundfile"]
 speaker = ["speakeronnx"]
 asr = ["onnx-asr"]
 vad = ["vadonnx"]
+# expected phones per lect for lect_fidelity; silabificador places Portuguese stress
+lect = ["orthography2ipa[portuguese]>=7.109.0a2", "scriptconv>=0.0.3"]
+# the tugaphone expected-phone provider for lect_fidelity
+lect-tugaphone = ["speechonnxmetrics[lect]", "tugaphone>=1.4.1a2"]
 
 [tool.setuptools.dynamic]
 version = {attr = "speechonnxmetrics.version.__version__"}

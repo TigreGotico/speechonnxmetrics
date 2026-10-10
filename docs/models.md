@@ -74,6 +74,42 @@ pass. NISQA segments its mel spectrogram into 15-frame patches at a 4-frame hop 
 pools them inside the graph, so audio shorter than 15 mel frames is rejected rather
 than padded.
 
+## Phone recognisers for lect fidelity
+
+`speechonnxmetrics.lect_fidelity` reads realised phones with one of two CTC phone
+recognisers. Both are exported here, because neither has an ONNX release upstream.
+
+| backend | HF repo | file | pinned revision | licence | upstream source | rate | output |
+|---|---|---|---|---|---|---|---|
+| `allosaurus` | `TigreGotico/allosaurus-onnx` | `allosaurus_uni2005.onnx` | `1234e2ef6ee47275cd865e5836a974ecb98bcf6f` | **GPL-3.0**, code and weights | [`xinjli/allosaurus`](https://github.com/xinjli/allosaurus) release `uni2005` | 8 kHz | 229 universal phones plus blank |
+| `wav2vec2_espeak` | `TigreGotico/wav2vec2-xlsr-53-espeak-cv-ft-onnx` | `wav2vec2_xlsr53_espeak_cv_ft.onnx` | `b07c09a08486c38f4c736cb1735e030f40e37bb7` | Apache-2.0 | [`facebook/wav2vec2-xlsr-53-espeak-cv-ft`](https://huggingface.co/facebook/wav2vec2-xlsr-53-espeak-cv-ft) at `2c733782da5604684829819a5eb744c193fe9398` | 16 kHz | 392 espeak-ng symbols including the blank |
+
+`allosaurus` is the default backend. Its weights are GPL-3.0: using them is permitted,
+and distributing them, or a work that includes them, carries the GPL's obligations.
+
+The Allosaurus graph holds only the acoustic model, a five-layer bidirectional LSTM. Its
+MFCC frontend runs in numpy: 40 Kaldi MFCCs with a povey window, utterance mean and
+variance normalisation, and three stacked frames at a stride of three. The input is
+resampled to 8 kHz with this package's kaiser resampler and stored as 16-bit PCM, as
+Allosaurus reads a WAV file. Allosaurus is sensitive at that level: through this path the
+pipeline gives Allosaurus's own phones on 171 of 172 phones of the test clips, while the
+same audio without the 16-bit step matches exactly on only 3 of the 12 clips. With
+dithering off, the numpy frontend matches Allosaurus's own feature model to 1e-5, which
+a test checks without the model.
+
+The wav2vec2 graph takes the waveform normalised to zero mean and unit variance and
+returns CTC logits; its greedy decoding equals the torch model's on every test clip.
+It cannot judge Brazilian Portuguese: its Portuguese training labels come from the
+European espeak-ng voice, so it writes European phones for Brazilian speech; see the
+README section on lect fidelity for the measurement.
+
+Each backend's units are read as IPA in `speechonnxmetrics/lect_fidelity/notation.py`.
+ASCII mnemonics go through scriptconv's Kirshenbaum table; units that spell an affricate
+without its tie bar, or use a non-IPA code point, are respelled by rows also proposed to
+scriptconv; units with no exact IPA counterpart, such as tone numbers and r-coloured
+vowels, are mapped by named metric decisions or dropped. A golden map in the tests
+covers every unit of both inventories.
+
 ## Models deliberately absent
 
 UTMOSv2 is not offered, for a technical reason rather than a licensing one: its published
@@ -86,6 +122,8 @@ published numbers.
 `conversion/export_utmos.py` regenerates `utmos22_strong.onnx` from the torch.hub
 checkpoint. DNSMOS and SIGMOS are shipped as ONNX upstream and are mirrored verbatim.
 NISQA was exported from its PyTorch checkpoint at opset 17.
+`conversion/export_allosaurus.py` and `conversion/export_wav2vec2_espeak.py` regenerate
+the two phone recognisers and write the reference outputs the tests compare against.
 
 ---
 [← CLI](cli.md) · [Home](index.md)
