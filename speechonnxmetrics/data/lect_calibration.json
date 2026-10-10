@@ -1,0 +1,688 @@
+{
+ "calibrations": {
+  "pt-PT|pt-BR|orthography2ipa|allosaurus": {
+   "lects": [
+    "pt-PT",
+    "pt-BR"
+   ],
+   "provider": "orthography2ipa",
+   "backend": "allosaurus",
+   "temperature": 0.9638440515059024,
+   "threshold": 0.028903114276619044,
+   "restrict_inventory": true,
+   "classes": {
+    "coda_s": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 200,
+       "pt-BR": 870,
+       "neither": 668
+      },
+      "pt-BR": {
+       "pt-PT": 80,
+       "pt-BR": 478,
+       "neither": 374
+      }
+     },
+     "llr": {
+      "pt-PT": 0.287187342907135,
+      "pt-BR": -0.023727031037914625,
+      "neither": -0.042810376321684496
+     },
+     "usable": true
+    },
+    "unstressed_e": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 1016,
+       "pt-BR": 1126,
+       "neither": 1029
+      },
+      "pt-BR": {
+       "pt-PT": 526,
+       "pt-BR": 1190,
+       "neither": 470
+      }
+     },
+     "llr": {
+      "pt-PT": 0.28586404394370635,
+      "pt-BR": -0.4267818588790152,
+      "neither": 0.41090818364377246
+     },
+     "usable": true
+    },
+    "unstressed_o": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      },
+      "pt-BR": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      }
+     },
+     "llr": {
+      "pt-PT": 0.0,
+      "pt-BR": 0.0,
+      "neither": 0.0
+     },
+     "usable": false
+    },
+    "td_before_i": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 352,
+       "pt-BR": 82,
+       "neither": 152
+      },
+      "pt-BR": {
+       "pt-PT": 126,
+       "pt-BR": 209,
+       "neither": 94
+      }
+     },
+     "llr": {
+      "pt-PT": 0.7122803750672291,
+      "pt-BR": -1.238267518328347,
+      "neither": 0.16656043438441825
+     },
+     "usable": true
+    },
+    "coda_l": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 43,
+       "pt-BR": 73,
+       "neither": 74
+      },
+      "pt-BR": {
+       "pt-PT": 19,
+       "pt-BR": 111,
+       "neither": 80
+      }
+     },
+     "llr": {
+      "pt-PT": 0.8870593371688098,
+      "pt-BR": -0.3158318012863853,
+      "neither": 0.021640935668411188
+     },
+     "usable": true
+    }
+   },
+   "provenance": {
+    "calibration_split": {
+     "calibration pt-PT": {
+      "clips": 1058,
+      "seconds": 6148.5,
+      "sites": 5685,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     },
+     "calibration pt-BR": {
+      "clips": 888,
+      "seconds": 4463.0,
+      "sites": 3757,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     }
+    },
+    "inventory": "restricted to the union of the two lects' phones",
+    "corpora": {
+     "calibration": [
+      "CLUL spoken varieties training recordings"
+     ],
+     "evaluation": [
+      "CLUL spoken varieties held-out recordings",
+      "compare-accents-pt"
+     ]
+    },
+    "packages": {
+     "orthography2ipa": "7.109.0a2",
+     "tugaphone": "1.4.1a2",
+     "scriptconv": "0.0.4a35",
+     "onnxruntime": "1.30.0"
+    },
+    "licences": {
+     "CLUL spoken varieties training recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "CLUL spoken varieties held-out recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "compare-accents-pt": "TigreGotico/compare-accents-pt, licence not stated on the card; evaluation only"
+    },
+    "split": "by recording: no recording is in both the calibration and the evaluation part",
+    "evaluation": {
+     "CLUL spoken varieties held-out recordings": {
+      "auc": 0.7001,
+      "auc_95ci": [
+       0.6609,
+       0.7378
+      ]
+     },
+     "compare-accents-pt": {
+      "auc": 1.0,
+      "auc_95ci": [
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "pt-PT|pt-BR|tugaphone|allosaurus": {
+   "lects": [
+    "pt-PT",
+    "pt-BR"
+   ],
+   "provider": "tugaphone",
+   "backend": "allosaurus",
+   "temperature": 0.9431746011996699,
+   "threshold": 0.030243003355644633,
+   "restrict_inventory": true,
+   "classes": {
+    "coda_s": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 102,
+       "pt-BR": 513,
+       "neither": 372
+      },
+      "pt-BR": {
+       "pt-PT": 48,
+       "pt-BR": 248,
+       "neither": 215
+      }
+     },
+     "llr": {
+      "pt-PT": 0.08742701244553874,
+      "pt-BR": 0.06928869131698712,
+      "neither": -0.10918166571382004
+     },
+     "usable": false
+    },
+    "unstressed_e": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 866,
+       "pt-BR": 832,
+       "neither": 1365
+      },
+      "pt-BR": {
+       "pt-PT": 414,
+       "pt-BR": 926,
+       "neither": 750
+      }
+     },
+     "llr": {
+      "pt-PT": 0.35498511956408385,
+      "pt-BR": -0.4886952603847722,
+      "neither": 0.21646105138084093
+     },
+     "usable": true
+    },
+    "unstressed_o": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      },
+      "pt-BR": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      }
+     },
+     "llr": {
+      "pt-PT": 0.0,
+      "pt-BR": 0.0,
+      "neither": 0.0
+     },
+     "usable": false
+    },
+    "td_before_i": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 321,
+       "pt-BR": 78,
+       "neither": 119
+      },
+      "pt-BR": {
+       "pt-PT": 121,
+       "pt-BR": 195,
+       "neither": 89
+      }
+     },
+     "llr": {
+      "pt-PT": 0.7260476334619465,
+      "pt-BR": -1.153149674112701,
+      "neither": 0.0431992051025758
+     },
+     "usable": true
+    },
+    "coda_l": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 78,
+       "pt-BR": 166,
+       "neither": 136
+      },
+      "pt-BR": {
+       "pt-PT": 31,
+       "pt-BR": 142,
+       "neither": 98
+      }
+     },
+     "llr": {
+      "pt-PT": 0.5688050668747195,
+      "pt-BR": -0.17975770063572794,
+      "neither": -0.010045807099040793
+     },
+     "usable": true
+    }
+   },
+   "provenance": {
+    "calibration_split": {
+     "calibration pt-PT": {
+      "clips": 1041,
+      "seconds": 6121.9,
+      "sites": 4948,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     },
+     "calibration pt-BR": {
+      "clips": 871,
+      "seconds": 4404.8,
+      "sites": 3277,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     }
+    },
+    "inventory": "restricted to the union of the two lects' phones",
+    "corpora": {
+     "calibration": [
+      "CLUL spoken varieties training recordings"
+     ],
+     "evaluation": [
+      "CLUL spoken varieties held-out recordings",
+      "compare-accents-pt"
+     ]
+    },
+    "packages": {
+     "orthography2ipa": "7.109.0a2",
+     "tugaphone": "1.4.1a2",
+     "scriptconv": "0.0.4a35",
+     "onnxruntime": "1.30.0"
+    },
+    "licences": {
+     "CLUL spoken varieties training recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "CLUL spoken varieties held-out recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "compare-accents-pt": "TigreGotico/compare-accents-pt, licence not stated on the card; evaluation only"
+    },
+    "split": "by recording: no recording is in both the calibration and the evaluation part",
+    "evaluation": {
+     "CLUL spoken varieties held-out recordings": {
+      "auc": 0.6847,
+      "auc_95ci": [
+       0.6451,
+       0.7223
+      ]
+     },
+     "compare-accents-pt": {
+      "auc": 1.0,
+      "auc_95ci": [
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "pt-PT|pt-BR|orthography2ipa|wav2vec2_espeak": {
+   "lects": [
+    "pt-PT",
+    "pt-BR"
+   ],
+   "provider": "orthography2ipa",
+   "backend": "wav2vec2_espeak",
+   "temperature": 0.9187396806118653,
+   "threshold": 0.012272748518600453,
+   "restrict_inventory": true,
+   "classes": {
+    "coda_s": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 92,
+       "pt-BR": 92,
+       "neither": 36
+      },
+      "pt-BR": {
+       "pt-PT": 15,
+       "pt-BR": 28,
+       "neither": 12
+      }
+     },
+     "llr": {
+      "pt-PT": 0.41328200999977527,
+      "pt-BR": -0.18142509774691762,
+      "neither": -0.3007602057310117
+     },
+     "usable": true
+    },
+    "unstressed_e": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 63,
+       "pt-BR": 76,
+       "neither": 234
+      },
+      "pt-BR": {
+       "pt-PT": 30,
+       "pt-BR": 106,
+       "neither": 52
+      }
+     },
+     "llr": {
+      "pt-PT": 0.04758016353126093,
+      "pt-BR": -1.0063391279514868,
+      "neither": 0.8119778852487723
+     },
+     "usable": true
+    },
+    "unstressed_o": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      },
+      "pt-BR": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      }
+     },
+     "llr": {
+      "pt-PT": 0.0,
+      "pt-BR": 0.0,
+      "neither": 0.0
+     },
+     "usable": false
+    },
+    "td_before_i": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 60,
+       "pt-BR": 3,
+       "neither": 8
+      },
+      "pt-BR": {
+       "pt-PT": 18,
+       "pt-BR": 18,
+       "neither": 5
+      }
+     },
+     "llr": {
+      "pt-PT": 0.6465594257209621,
+      "pt-BR": -2.078020077332458,
+      "neither": -0.1144103511777439
+     },
+     "usable": true
+    },
+    "coda_l": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 21,
+       "pt-BR": 2,
+       "neither": 4
+      },
+      "pt-BR": {
+       "pt-PT": 12,
+       "pt-BR": 3,
+       "neither": 3
+      }
+     },
+     "llr": {
+      "pt-PT": 0.1694181519580466,
+      "pt-BR": -0.644357016390513,
+      "neither": -0.13353139262452252
+     },
+     "usable": false
+    }
+   },
+   "provenance": {
+    "calibration_split": {
+     "calibration pt-PT": {
+      "clips": 120,
+      "seconds": 759.3,
+      "sites": 691,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     },
+     "calibration pt-BR": {
+      "clips": 74,
+      "seconds": 371.8,
+      "sites": 302,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     }
+    },
+    "inventory": "restricted to the union of the two lects' phones",
+    "corpora": {
+     "calibration": [
+      "CLUL spoken varieties training recordings"
+     ],
+     "evaluation": [
+      "CLUL spoken varieties held-out recordings",
+      "compare-accents-pt"
+     ]
+    },
+    "packages": {
+     "orthography2ipa": "7.109.0a2",
+     "tugaphone": "1.4.1a2",
+     "scriptconv": "0.0.4a35",
+     "onnxruntime": "1.30.0"
+    },
+    "licences": {
+     "CLUL spoken varieties training recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "CLUL spoken varieties held-out recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "compare-accents-pt": "TigreGotico/compare-accents-pt, licence not stated on the card; evaluation only"
+    },
+    "split": "by recording: no recording is in both the calibration and the evaluation part",
+    "evaluation": {
+     "CLUL spoken varieties held-out recordings": {
+      "auc": 0.7783,
+      "auc_95ci": [
+       0.7254,
+       0.8279
+      ]
+     },
+     "compare-accents-pt": {
+      "auc": 0.9881,
+      "auc_95ci": [
+       0.9286,
+       1.0
+      ]
+     }
+    }
+   }
+  },
+  "pt-PT|pt-BR|tugaphone|wav2vec2_espeak": {
+   "lects": [
+    "pt-PT",
+    "pt-BR"
+   ],
+   "provider": "tugaphone",
+   "backend": "wav2vec2_espeak",
+   "temperature": 0.9052931738136306,
+   "threshold": 0.07347724924493337,
+   "restrict_inventory": true,
+   "classes": {
+    "coda_s": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 52,
+       "pt-BR": 46,
+       "neither": 21
+      },
+      "pt-BR": {
+       "pt-PT": 7,
+       "pt-BR": 13,
+       "neither": 11
+      }
+     },
+     "llr": {
+      "pt-PT": 0.6131898517551906,
+      "pt-BR": -0.06657024802229516,
+      "neither": -0.6715247165467797
+     },
+     "usable": true
+    },
+    "unstressed_e": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 71,
+       "pt-BR": 60,
+       "neither": 241
+      },
+      "pt-BR": {
+       "pt-PT": 31,
+       "pt-BR": 74,
+       "neither": 65
+      }
+     },
+     "llr": {
+      "pt-PT": 0.03729578474369699,
+      "pt-BR": -0.9802486808356312,
+      "neither": 0.525648552657629
+     },
+     "usable": true
+    },
+    "unstressed_o": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      },
+      "pt-BR": {
+       "pt-PT": 0,
+       "pt-BR": 0,
+       "neither": 0
+      }
+     },
+     "llr": {
+      "pt-PT": 0.0,
+      "pt-BR": 0.0,
+      "neither": 0.0
+     },
+     "usable": false
+    },
+    "td_before_i": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 54,
+       "pt-BR": 1,
+       "neither": 9
+      },
+      "pt-BR": {
+       "pt-PT": 18,
+       "pt-BR": 15,
+       "neither": 5
+      }
+     },
+     "llr": {
+      "pt-PT": 0.5717736533793721,
+      "pt-BR": -2.570562094366494,
+      "neither": 0.01970507107933228
+     },
+     "usable": true
+    },
+    "coda_l": {
+     "counts": {
+      "pt-PT": {
+       "pt-PT": 29,
+       "pt-BR": 7,
+       "neither": 12
+      },
+      "pt-BR": {
+       "pt-PT": 15,
+       "pt-BR": 4,
+       "neither": 6
+      }
+     },
+     "llr": {
+      "pt-PT": 0.028987536873252395,
+      "pt-BR": -0.12961749330338623,
+      "neither": 0.019418085857101364
+     },
+     "usable": false
+    }
+   },
+   "provenance": {
+    "calibration_split": {
+     "calibration pt-PT": {
+      "clips": 117,
+      "seconds": 756.4,
+      "sites": 603,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     },
+     "calibration pt-BR": {
+      "clips": 74,
+      "seconds": 372.6,
+      "sites": 264,
+      "corpus": [
+       "CLUL spoken varieties training recordings"
+      ]
+     }
+    },
+    "inventory": "restricted to the union of the two lects' phones",
+    "corpora": {
+     "calibration": [
+      "CLUL spoken varieties training recordings"
+     ],
+     "evaluation": [
+      "CLUL spoken varieties held-out recordings",
+      "compare-accents-pt"
+     ]
+    },
+    "packages": {
+     "orthography2ipa": "7.109.0a2",
+     "tugaphone": "1.4.1a2",
+     "scriptconv": "0.0.4a35",
+     "onnxruntime": "1.30.0"
+    },
+    "licences": {
+     "CLUL spoken varieties training recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "CLUL spoken varieties held-out recordings": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits, MIT",
+     "compare-accents-pt": "TigreGotico/compare-accents-pt, licence not stated on the card; evaluation only"
+    },
+    "split": "by recording: no recording is in both the calibration and the evaluation part",
+    "evaluation": {
+     "CLUL spoken varieties held-out recordings": {
+      "auc": 0.8071,
+      "auc_95ci": [
+       0.7558,
+       0.8556
+      ]
+     },
+     "compare-accents-pt": {
+      "auc": 1.0,
+      "auc_95ci": [
+       1.0,
+       1.0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

@@ -33,8 +33,10 @@ Extras (all optional):
 | `speaker` | `speakeronnx` | speaker-embedding extraction for `speaker_similarity` |
 | `asr` | `onnx-asr` | running an ASR model to get hypotheses (WER/CER scoring itself needs nothing) |
 | `vad` | `vadonnx` | voice-activity gating |
+| `lect` | `orthography2ipa[portuguese]`, `scriptconv` | expected phones per lect for `lect_fidelity`, with Portuguese syllabification and notation conversion |
+| `lect-tugaphone` | the `lect` extra and `tugaphone` | the `tugaphone` expected-phone provider for `lect_fidelity` |
 | `export` | `torch`, `onnx` | maintainer-only offline model conversion |
-| `test` | `pytest`, `pytest-cov`, `scipy` | running the test suite (scipy is a test-only oracle) |
+| `test` | `pytest`, `pytest-cov`, `scipy`, the `lect` dependencies and `tugaphone` | running the test suite (scipy is a test-only oracle) |
 
 ```bash
 pip install "speechonnxmetrics[audio,speaker]"
@@ -108,6 +110,154 @@ metrics. The **text** metrics compare strings and are called directly from
 Not in the `score()` registry. Call these from `speechonnxmetrics.speaker`:
 `speaker_similarity` (cosine between speaker embeddings, needs the `speaker` extra),
 plus pure-numpy `eer`, `min_dcf` and `equal_error_threshold` over score/label arrays.
+
+### Lect fidelity
+
+`lect_fidelity` measures how far a clip of known text realises one lect of a language
+against another, for example European against Brazilian Portuguese. It is not in the
+`score()` registry, because it needs the text and the lects. It needs the `lect` extra.
+
+```python
+from speechonnxmetrics.lect_fidelity import LectFidelity
+
+scorer = LectFidelity(("pt-PT", "pt-BR"))          # Allosaurus, orthography2ipa
+result = scorer.score("clip.wav", "Os meninos partiram mais cedo.")
+if result is not None:
+    print(result.shares)                 # percent of sites read as pt-PT, pt-BR, neither
+    print(result.shares_by_level)        # the same, pre-lexical and post-lexical apart
+    print(result.log_likelihood_ratio, result.decision)
+    for row in result.report():
+        print(row["class"], row["context"], row["expected.pt-PT"], row["expected.pt-BR"], row["realised"], row["reading"])
+
+pooled = scorer.pool([scorer.score(p, t) for p, t in clips_of_one_voice])
+print(pooled.duration, pooled.posterior, pooled.shares)
+```
+
+The metric works in three steps.
+
+1. **Expected phones.** A provider gives each lect's readings of each word. The default
+   is `orthography2ipa`; `provider="tugaphone"` adds number verbalisation, homograph
+   marking and the `tugalex` lexicon, and needs the `lect-tugaphone` extra. A provider is
+   a small interface (`PhoneProvider.candidates(text, lect)`), so another phonemiser can
+   take its place. A word's candidates are its reading in the sentence, its reading in
+   isolation and the spec's free variants, so an optional process is a licensed reading
+   rather than a miss where the spec licenses it. European word-final e is licensed to
+   drop only before a word that begins with a vowel (`que o` read `k o`); before a
+   consonant or at the end of an utterance the specs keep it, so a final e missing there
+   is read as neither lect.
+2. **Sites.** The two lects' readings are aligned, and a one-segment difference becomes a
+   *site* only in a documented class: coda s, unstressed e, unstressed o, t and d before
+   i, and coda l. Differences that are fused with a neighbouring difference (final
+   `-de` read `dɨ` against `d͡ʒi`), sites whose candidate sets overlap, and differences
+   outside the classes are excluded and counted. Unstressed reduction is pre-lexical;
+   coda s, coda l and affrication are post-lexical, and the two groups are reported apart.
+3. **Readings.** A phone recogniser writes the audio as IPA; `allosaurus` is the default
+   backend. Each site is read as the lect whose candidates hold the nearer realisation
+   by phonetic feature distance, or as neither. A deleted segment counts only when the
+   phones around it were heard. A clip with fewer than 4 realised phones, or fewer than
+   0.4 of the expected count, returns `None`, so silence gives no verdict. So does a clip
+   with more than twice the expected count, such as a short clip repeated for minutes;
+   the most any measured CLUL clip realised, with either backend, was 1.77 times its
+   expected count.
+
+The per-clip figures are the shares and a log-likelihood ratio summed over sites, with
+the reliability of each site class measured on real speech of both lects. The table
+ships in `speechonnxmetrics/data/lect_calibration.json`, one entry per provider and
+backend, with the corpora, sizes and package versions it was measured on, and it serves
+either lect order: `("pt-BR", "pt-PT")` gives the same verdict as `("pt-PT", "pt-BR")`,
+with the log-likelihood ratio in favour of the lect named first. A class whose
+readings do not differ between the lects at the 5% level carries no weight; unstressed o
+has no sites at all, because the Brazilian spec licenses `u` there too. A posterior over
+the lects is given only for pooled clips, with the pooled duration beside it: a clip of a
+few seconds holds two to seven sites, too few for one.
+
+#### Measured on real speech
+
+The shipped calibration and the main measurement come from one corpus holding both
+lects, so that the corpus cannot be what separates them: the CLUL corpus "Spoken
+Portuguese: Geographical and Social Varieties", sentence clips of interviews recorded
+in Portugal and Brazil (`Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits`,
+MIT), split by recording so that no recording is on both sides. compare-accents-pt, one
+paragraph read by each of twenty speakers, is a second test. The 37 training and 13
+held-out recordings are named in `evaluation/lect_fidelity/clul-split.json`.
+
+| part | recordings or speakers | clips scored, pt-PT / pt-BR | speech, pt-PT / pt-BR |
+|---|---|---|---|
+| CLUL training recordings, calibration | 37 recordings, 22 pt-PT and 15 pt-BR | 1,058 / 888 | 102.5 / 74.4 min |
+| CLUL held-out recordings, evaluation | 13 recordings, 8 pt-PT and 5 pt-BR | 375 / 333 | 41.2 / 22.5 min |
+| compare-accents-pt, evaluation | 20 speakers, 6 pt-PT and 14 pt-BR | 6 / 14 | one paragraph each |
+
+Of the CLUL clips, those without a site and those with too little realised speech give
+no result and are not counted: 567 of 2,513 in the training part and 231 of 939 in the
+held-out part, the latter mostly short or overlapping turns. The counts above are
+Allosaurus's, decoded with the restriction the results below use. The wav2vec2 model
+runs several times slower on CPU, so its rows use six training clips and up to 31
+held-out clips per recording, 194 and 337 of them scored; the clips are named in
+`evaluation/lect_fidelity/wav2vec2-clips.json`.
+
+Results with the default `orthography2ipa` provider, decoding restricted to the union
+of the two lects' phones, which is how the shipped calibration was measured:
+
+| backend | CLUL held-out, clip AUC | CLUL clips right, pt-PT / pt-BR | CLUL recordings right | compare-accents-pt, AUC | speakers right, pt-PT / pt-BR |
+|---|---|---|---|---|---|
+| `allosaurus` | 0.70 (0.66–0.74) | 237 of 375 / 224 of 333 | 12 of 13 | 1.00 | 6 of 6 / 13 of 14 |
+| `wav2vec2_espeak` | 0.78 (0.73–0.83) | 157 of 215 / 84 of 122 | 13 of 13 | 0.99 (0.93–1.00) | 5 of 6 / 14 of 14 |
+
+Decoding without the restriction, the CLUL clip AUC is 0.69 (0.66–0.73) for
+`allosaurus` and 0.59 (0.54–0.64) for `wav2vec2_espeak`. With `provider="tugaphone"`
+the restricted CLUL AUCs are 0.69 (0.65–0.72) and 0.81 (0.76–0.86).
+
+AUC is that of the clip log-likelihood ratio, with a stratified bootstrap 95% interval.
+Clip accuracy is at the calibrated decision point. A recording or speaker is decided by
+pooling all its clips, 2.3 to 11 minutes per CLUL recording. On the CLUL held-out part
+the Allosaurus AUC stays between 0.66 and 0.76 in every duration bin from under 3 to
+over 10 seconds, so clip length does not carry it.
+
+A single clip of a few seconds holds two to seven sites, and the recogniser often misses
+the vowel or the sibilant there, so one clip is weak evidence; a whole recording of one
+speaker is classified reliably.
+
+`wav2vec2_espeak` learned Portuguese from Common Voice clips labelled with espeak-ng's
+European voice, so it tends to write European phones for Brazilian speech. Its CLUL rows
+rest on a calibration of 194 clips, and the unrestricted 0.59 may come from that small
+calibration rather than from the model: unrestricted, only one site class passes the
+calibration gate there, and a leave-one-recording-out cross-validation within the
+training recordings gives a clip AUC of 0.63 on those 194 clips but 0.77 on another
+draw of 332 clips, ten per recording. Restricted, the same cross-validation gives 0.80
+and 0.78, in line with the held-out 0.78. On the cross-corpus calibration below no site
+class passes the gate even restricted, and it gives no evidence at all. It is not the
+default.
+
+A second measurement takes each lect from a different corpus and is confounded by
+corpus, channel, text domain and length: pt-PT from Speech-MASSIVE pt-PT (read
+assistant commands, CC-BY-NC-SA-4.0, used for evaluation only and not redistributed)
+against pt-BR from the FLEURS pt_br test split (read news, CC-BY-4.0), calibrated on
+EuroSpeech Portugal validation (parliament, six sessions) and the FLEURS pt_br dev split.
+Clip duration alone separates its two evaluation corpora with an AUC of 0.99, and the
+duration bins barely overlap, so its figures say little about lect:
+
+| backend | clip AUC | clips right, pt-PT / pt-BR | pools of 30 s right, pt-PT / pt-BR |
+|---|---|---|---|
+| `allosaurus` | 0.90 (0.88–0.92) | 236 of 343 / 300 of 348 | 40 of 42 / 116 of 121 |
+| `wav2vec2_espeak` | 0.50, no usable site class | 0 of 128 / 149 of 149 | 0 of 15 / 54 of 54 |
+
+**To add a language pair**, the site classes must be documented for it, as
+`SITE_CLASSES` in `speechonnxmetrics/lect_fidelity/sites.py` documents them for
+Portuguese, and a calibration must be measured on real speech of both lects with
+`evaluation/lect_fidelity/`. The scorer refuses a pair without classes.
+
+The ONNX exports, their pinned revisions and licences are in
+[`docs/models.md`](docs/models.md); the export scripts are in
+[`conversion/`](conversion/).
+
+The lect-fidelity tests run without the real models: two one-layer ONNX graphs with
+the recognisers' shapes exercise each backend's whole path, and Allosaurus's own feature
+model output is stored for the frontend. The Allosaurus parity tests download its 44 MB
+export from the pinned revision. The wav2vec2 parity test needs the 1.26 GB export and
+runs only when `SPEECHONNXMETRICS_LECT_MODELS` names a directory holding
+`wav2vec2_xlsr53_espeak_cv_ft.onnx`. The twelve synthesised test clips come from Piper
+voices fine-tuned from a voice trained on research-only data, so whether they may be
+redistributed freely is unclear; their manifest records the lineage.
 
 Sample-rate handling is automatic: the base resamples input to each model's native rate
 (UTMOS/DNSMOS 16 kHz, SIGMOS 48 kHz, STOI analysis at 10 kHz), and NISQA is
@@ -189,9 +339,12 @@ The package itself is **Apache-2.0**. Model weights carry their own licences:
 |---|---|---|
 | MIT | `dnsmos`, `dnsmos_p808`, `sigmos`, `utmos` | permitted |
 | **CC BY-NC-SA 4.0 (NonCommercial)** | **`nisqa`** | **forbidden** |
+| Apache-2.0 | `lect_fidelity` with `wav2vec2_espeak` | permitted |
+| GPL-3.0 | `lect_fidelity` with `allosaurus`, the default backend | permitted; distributing the weights or a work that includes them carries the GPL's obligations |
 
-**`nisqa` is the one caveat: its weights are NonCommercial.** Every other metric is
-safe for commercial use. The package makes no choice for you. It exposes the metric
+**`nisqa` is the one NonCommercial caveat.** `lect_fidelity` with its default backend
+uses GPL-3.0 weights: commercial use is allowed, and distribution brings the GPL's
+copyleft terms. Every other metric is safe for commercial use. The package makes no choice for you. It exposes the metric
 and states the terms, and selecting it is your call. Full per-model breakdown in
 [`docs/models.md`](docs/models.md).
 
