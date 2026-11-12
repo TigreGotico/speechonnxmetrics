@@ -9,7 +9,6 @@ description = "Unified speech evaluation metrics — MOS, intrusive, and ASR —
 license = {text = "Apache-2.0"}
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -20,7 +19,7 @@ classifiers = [
 ]
 authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = [
     "speech evaluation", "mos", "utmos", "nisqa", "dnsmos", "sigmos",
     "stoi", "si-sdr", "mcd", "wer", "cer", "speaker similarity", "onnx",

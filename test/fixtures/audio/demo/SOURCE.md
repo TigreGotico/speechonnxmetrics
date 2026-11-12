@@ -1,0 +1,1 @@
+`source.wav`, `reference_aria.wav` and `reference_sonia.wav` are edge-tts output of the Microsoft voices `en-US-GuyNeural`, `en-US-AriaNeural` and `en-GB-SoniaNeural`, and the `bicodec__*` and `chatterbox__*` clips are voiceclonnx conversions of `source.wav` to those references, copied from `TigreGotico/voiceclonnx` `demo/` at commit `0078dec`.
