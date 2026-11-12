@@ -40,11 +40,14 @@ def _downmix(x: np.ndarray) -> np.ndarray:
 
 
 def _read_wave_bytes(data: bytes) -> tuple[np.ndarray, int]:
-    with wave.open(io.BytesIO(data), "rb") as wf:
-        sr = wf.getframerate()
-        n_channels = wf.getnchannels()
-        sampwidth = wf.getsampwidth()
-        raw = wf.readframes(wf.getnframes())
+    try:
+        with wave.open(io.BytesIO(data), "rb") as wf:
+            sr = wf.getframerate()
+            n_channels = wf.getnchannels()
+            sampwidth = wf.getsampwidth()
+            raw = wf.readframes(wf.getnframes())
+    except (wave.Error, EOFError) as exc:
+        raise AudioLoadError(f"cannot decode audio as WAV: {exc}") from exc
     dtype = {1: np.uint8, 2: np.int16, 4: np.int32}.get(sampwidth)
     if dtype is None:
         raise AudioLoadError(f"unsupported WAV sample width: {sampwidth} bytes")
@@ -56,11 +59,18 @@ def _read_wave_bytes(data: bytes) -> tuple[np.ndarray, int]:
     return samples, sr
 
 
+def _read_soundfile(source: str | io.BytesIO) -> tuple[np.ndarray, int]:
+    import soundfile as sf
+
+    try:
+        return sf.read(source, dtype="float32", always_2d=False)
+    except sf.SoundFileError as exc:
+        raise AudioLoadError(f"cannot decode audio: {exc}") from exc
+
+
 def _load_bytes(data: bytes) -> tuple[np.ndarray, int]:
     try:
-        import soundfile as sf
-        x, sr = sf.read(io.BytesIO(data), dtype="float32", always_2d=False)
-        return x, sr
+        return _read_soundfile(io.BytesIO(data))
     except ImportError:
         return _read_wave_bytes(data)
 
@@ -70,9 +80,7 @@ def _load_path(path: str | Path) -> tuple[np.ndarray, int]:
     if not p.is_file():
         raise AudioLoadError(f"audio file not found: {p}")
     try:
-        import soundfile as sf
-        x, sr = sf.read(str(p), dtype="float32", always_2d=False)
-        return x, sr
+        return _read_soundfile(str(p))
     except ImportError:
         return _read_wave_bytes(p.read_bytes())
 

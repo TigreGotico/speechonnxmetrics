@@ -17,13 +17,9 @@ Model weights download from public HuggingFace repos on first use and cache loca
 
 ## Install
 
-Not yet on PyPI. Install from git:
-
 ```bash
-pip install git+https://github.com/TigreGotico/speechonnxmetrics
+pip install speechonnxmetrics
 ```
-
-Once published, `pip install speechonnxmetrics` will work too.
 
 Extras (all optional):
 
@@ -43,18 +39,20 @@ pip install "speechonnxmetrics[audio,speaker]"
 ## Quickstart
 
 ```python
+from urllib.request import urlretrieve
 import speechonnxmetrics as s
 
-# No-reference neural MOS (downloads UTMOS weights on first call, then caches):
-print(s.score("test/fixtures/audio/source.wav", ["utmos"]))
-# -> {'utmos': 4.4115...}
-
-# Intrusive metrics need a clean reference (pure numpy, no download):
-print(s.score("test/fixtures/audio/facodec_aria.wav",
-              ["stoi", "mcd", "si_sdr"],
-              ref="test/fixtures/audio/source.wav"))
-# -> {'stoi': 0.662..., 'mcd': 10.459..., 'si_sdr': -26.937...}
+clips = "https://raw.githubusercontent.com/TigreGotico/speechonnxmetrics/4210419/test/fixtures/audio/"
+ref, _ = urlretrieve(clips + "source.wav")
+deg, _ = urlretrieve(clips + "facodec_aria.wav")
+print(s.score(ref, ["utmos"]))  # -> {'utmos': 4.4115...}
+print(s.score(deg, ["stoi", "mcd", "si_sdr"], ref=ref))  # -> {'stoi': 0.662..., 'mcd': 10.459..., 'si_sdr': -26.937...}
 ```
+
+UTMOS downloads its weights on the first call and caches them. The intrusive metrics
+`stoi`, `mcd` and `si_sdr` compare the clip with a clean reference in pure numpy, with
+no download. A no-reference metric rejects digital silence with `SilentAudioError`, and
+`score_batch` records an undecodable or silent file as an error for that file only.
 
 Dict-valued metrics flatten into the result. `dnsmos` becomes `dnsmos.sig`,
 `dnsmos.bak`, `dnsmos.ovrl`. `nisqa` becomes `nisqa.mos`, `nisqa.noi`, and more.

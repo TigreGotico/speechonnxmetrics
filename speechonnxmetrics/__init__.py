@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from speechonnxmetrics.api import score, score_batch
-from speechonnxmetrics.base import Metric, ModelEntry, OnnxMetric
+from speechonnxmetrics.base import Metric, ModelEntry, OnnxMetric, SilentAudioError
 from speechonnxmetrics.registry import RegistryEntry, get, list_metrics, register
 from speechonnxmetrics.version import __version__
 
@@ -13,6 +13,7 @@ __all__ = [
     "Metric",
     "ModelEntry",
     "OnnxMetric",
+    "SilentAudioError",
     "RegistryEntry",
     "get",
     "list_metrics",

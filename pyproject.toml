@@ -44,8 +44,9 @@ speechonnxmetrics = "speechonnxmetrics.cli:main"
 test = ["pytest", "pytest-cov", "scipy"]
 # offline model conversion scripts only (maintainer use); never a runtime dependency
 export = ["torch", "onnx"]
-# broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only)
-audio = ["soundfile"]
+# broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only).
+# 0.11 is the first release with soundfile.SoundFileError.
+audio = ["soundfile>=0.11"]
 speaker = ["speakeronnx"]
 asr = ["onnx-asr"]
 vad = ["vadonnx"]
@@ -62,5 +63,5 @@ include = ["speechonnxmetrics*"]
 
 [tool.pytest.ini_options]
 markers = [
-    "models: needs the ONNX weights; skipped when they are neither cached nor downloadable",
+    "models: downloads the public ONNX weights; deselect with -m \"not models\" to run offline",
 ]
