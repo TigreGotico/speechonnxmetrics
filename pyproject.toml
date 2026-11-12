@@ -9,7 +9,6 @@ description = "Unified speech evaluation metrics — MOS, intrusive, and ASR —
 license = {text = "Apache-2.0"}
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -20,7 +19,7 @@ classifiers = [
 ]
 authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = [
     "speech evaluation", "mos", "utmos", "nisqa", "dnsmos", "sigmos",
     "stoi", "si-sdr", "mcd", "wer", "cer", "speaker similarity", "onnx",
@@ -44,8 +43,9 @@ speechonnxmetrics = "speechonnxmetrics.cli:main"
 test = ["pytest", "pytest-cov", "scipy"]
 # offline model conversion scripts only (maintainer use); never a runtime dependency
 export = ["torch", "onnx"]
-# broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only)
-audio = ["soundfile"]
+# broad codec support for _dsp.audio; the base install falls back to stdlib wave (WAV only).
+# 0.11 is the first release with soundfile.SoundFileError.
+audio = ["soundfile>=0.11"]
 speaker = ["speakeronnx"]
 asr = ["onnx-asr"]
 vad = ["vadonnx"]
@@ -62,5 +62,5 @@ include = ["speechonnxmetrics*"]
 
 [tool.pytest.ini_options]
 markers = [
-    "models: needs the ONNX weights; skipped when they are neither cached nor downloadable",
+    "models: downloads the public ONNX weights; deselect with -m \"not models\" to run offline",
 ]

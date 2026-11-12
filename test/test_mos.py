@@ -1,21 +1,20 @@
 """Tests for the no-reference MOS metrics.
 
-Split in two: everything structural runs offline against a stub inference session, so
-``pytest test/`` is green with no network and no model cache. The parity tests — the
-ones that actually prove the frontends are right — are marked ``models`` and skip only
-when the weights are genuinely unobtainable here (not cached and no HuggingFace token).
+Split in two: everything structural runs offline against a stub inference session.
+The parity tests — the ones that actually prove the frontends are right — are marked
+``models`` and download the public ONNX weights on first run. Deselect them with
+``-m "not models"`` to run offline.
 """
 from __future__ import annotations
 
 import json
-import os
 import re
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from speechonnxmetrics import api, registry
+from speechonnxmetrics import SilentAudioError, api, registry
 from speechonnxmetrics._dsp.audio import AudioLoadError
 from speechonnxmetrics.mos import DNSMOS, NISQA, SIGMOS, UTMOS, DNSMOSP808
 from speechonnxmetrics.mos.dnsmos import WINDOW_SAMPLES, segment
@@ -27,7 +26,8 @@ from speechonnxmetrics.mos.utmos import MIN_SAMPLES
 
 FIXTURES = Path(__file__).parent / "fixtures"
 AUDIO = FIXTURES / "audio"
-DEMO = Path("/home/miro/AgentWorkspaces/ml/voiceclonnx/demo")
+#: Clips from the ``demo/`` folder of TigreGotico/voiceclonnx at commit 0078dec.
+DEMO = AUDIO / "demo"
 
 #: Achieved parity against each reference implementation, with headroom.
 #: DNSMOS/UTMOS are exact to float32; SIGMOS is looser because the reference computes
@@ -40,30 +40,6 @@ TOL = {"dnsmos": 1e-5, "dnsmos_p808": 1e-5, "sigmos": 2e-3, "utmos": 1e-4}
 #: NISQA agrees with the torch reference to 2.6e-06 through our frontend; 1e-4 leaves
 #: room for float32 ordering differences without hiding a frontend parameter error.
 NISQA_TOL = 1e-4
-
-
-def _weights_available() -> bool:
-    """Whether the ONNX weights can actually be obtained in this environment."""
-    from huggingface_hub import constants, get_token
-
-    if get_token():
-        return True
-    from speechonnxmetrics.resolver import get_cache_dir
-
-    hf_cache = Path(get_cache_dir()) / "hf"
-    if any(hf_cache.glob("**/*.onnx")):
-        return True
-    shared = Path(constants.HF_HUB_CACHE)
-    return any(
-        any(shared.glob(f"**/{repo}-onnx/**/*.onnx"))
-        for repo in ("dnsmos", "sigmos", "utmos", "nisqa")
-    )
-
-
-needs_weights = pytest.mark.skipif(
-    not _weights_available(),
-    reason="MOS weights are neither cached nor downloadable here (no HF token)",
-)
 
 
 class StubSession:
@@ -155,8 +131,8 @@ def test_construction_creates_no_session() -> None:
 def test_session_is_created_once_and_lazily() -> None:
     metric = UTMOS()
     session = _stub(metric, [np.array([4.0], dtype=np.float32)], ("wave",))
-    metric(np.zeros(MIN_SAMPLES, dtype=np.float32), 16000)
-    metric(np.zeros(MIN_SAMPLES, dtype=np.float32), 16000)
+    metric(np.full(MIN_SAMPLES, 0.1, dtype=np.float32), 16000)
+    metric(np.full(MIN_SAMPLES, 0.1, dtype=np.float32), 16000)
     assert metric.session is session
     assert len(session.feeds) == 2
 
@@ -208,7 +184,7 @@ def test_dnsmos_averages_the_polynomial_mapped_segment_scores() -> None:
     metric = DNSMOS()
     raw = np.array([[3.0, 4.0, 3.5], [3.4, 4.2, 3.1]], dtype=np.float32)
     _stub(metric, [raw])
-    scores = metric(np.zeros(20 * 16000, dtype=np.float32), 16000)
+    scores = metric(np.full(20 * 16000, 0.1, dtype=np.float32), 16000)
     from speechonnxmetrics.mos.dnsmos import POLYFIT
 
     for i, key in enumerate(("sig", "bak", "ovrl")):
@@ -220,7 +196,7 @@ def test_dnsmos_polynomial_mapping_is_not_the_identity() -> None:
     metric = DNSMOS()
     raw = np.array([[3.0, 3.0, 3.0]], dtype=np.float32)
     _stub(metric, [raw])
-    scores = metric(np.zeros(WINDOW_SAMPLES, dtype=np.float32), 16000)
+    scores = metric(np.full(WINDOW_SAMPLES, 0.1, dtype=np.float32), 16000)
     assert all(abs(v - 3.0) > 0.05 for v in scores.values())
 
 
@@ -229,14 +205,14 @@ def test_personalized_dnsmos_uses_different_polynomials() -> None:
     plain, personalized = DNSMOS(), DNSMOS(personalized=True)
     _stub(plain, [raw])
     _stub(personalized, [raw])
-    audio = np.zeros(WINDOW_SAMPLES, dtype=np.float32)
+    audio = np.full(WINDOW_SAMPLES, 0.1, dtype=np.float32)
     assert plain(audio, 16000) != personalized(audio, 16000)
 
 
 def test_p808_frontend_shape_matches_the_model_input() -> None:
     metric = DNSMOSP808()
     session = _stub(metric, [np.array([[3.5], [3.7]], dtype=np.float32)])
-    metric(np.zeros(11 * 16000, dtype=np.float32), 16000)
+    metric(np.full(11 * 16000, 0.1, dtype=np.float32), 16000)
     feats = session.feeds[0]["input_1"]
     assert feats.shape == (2, 900, 120)
     assert feats.dtype == np.float32
@@ -245,7 +221,7 @@ def test_p808_frontend_shape_matches_the_model_input() -> None:
 def test_p808_averages_over_segments() -> None:
     metric = DNSMOSP808()
     _stub(metric, [np.array([[3.0], [4.0]], dtype=np.float32)])
-    assert metric(np.zeros(11 * 16000, dtype=np.float32), 16000) == pytest.approx(3.5)
+    assert metric(np.full(11 * 16000, 0.1, dtype=np.float32), 16000) == pytest.approx(3.5)
 
 
 # ------------------------------------------------------------------ #
@@ -273,7 +249,7 @@ def test_sigmos_features_reject_empty_audio() -> None:
 def test_sigmos_returns_all_seven_dimensions_in_order() -> None:
     metric = SIGMOS()
     _stub(metric, [np.arange(7, dtype=np.float32).reshape(1, 7) + 1.0])
-    scores = metric(np.zeros(48000, dtype=np.float32), 48000)
+    scores = metric(np.full(48000, 0.1, dtype=np.float32), 48000)
     assert list(scores) == list(DIMENSIONS)
     assert scores["col"] == 1.0 and scores["ovrl"] == 7.0
 
@@ -329,20 +305,31 @@ def test_a_non_finite_model_output_raises_rather_than_returning_nan(metric_facto
     metric = metric_factory()
     _stub(metric, outputs, ("wave",))
     with pytest.raises(ValueError, match="non-finite"):
-        metric(np.zeros(48000, dtype=np.float32), metric.sample_rate)
+        metric(np.full(48000, 0.1, dtype=np.float32), metric.sample_rate)
 
 
-def test_all_zero_audio_scores_without_nan() -> None:
-    metric = DNSMOS()
-    _stub(metric, [np.array([[3.0, 3.0, 3.0]], dtype=np.float32)])
-    scores = metric(np.zeros(5 * 16000, dtype=np.float32), 16000)
-    assert all(np.isfinite(v) for v in scores.values())
+@pytest.mark.parametrize("metric_factory", [DNSMOS, DNSMOSP808, SIGMOS, UTMOS, NISQA])
+def test_digital_silence_is_invalid_and_never_reaches_the_model(metric_factory) -> None:
+    metric = metric_factory()
+    session = _stub(metric, [np.array([[3.0, 3.0, 3.0]], dtype=np.float32)])
+    with pytest.raises(SilentAudioError, match="digital silence"):
+        metric(np.zeros(5 * 16000, dtype=np.float32), 16000)
+    assert session.feeds == []
+
+
+def test_a_clip_whose_peak_is_one_16_bit_step_is_not_silence() -> None:
+    # 1 / 32768 is the smallest non-zero sample a 16-bit PCM file can hold.
+    metric = UTMOS()
+    _stub(metric, [np.array([3.0], dtype=np.float32)], ("wave",))
+    audio = np.zeros(MIN_SAMPLES, dtype=np.float32)
+    audio[100] = 1 / 32768
+    assert metric(audio, 16000) == pytest.approx(3.0)
 
 
 def test_wrong_sample_rate_is_resampled_not_rejected() -> None:
     metric = DNSMOS()
     session = _stub(metric, [np.array([[3.0, 3.0, 3.0]], dtype=np.float32)])
-    metric(np.zeros(44100 * 12, dtype=np.float32), 44100)  # 12 s at a non-native rate
+    metric(np.full(44100 * 12, 0.1, dtype=np.float32), 44100)  # 12 s at a non-native rate
     feats = session.feeds[0]["input_1"]
     assert feats.shape == (3, WINDOW_SAMPLES)  # resampled to 16 kHz -> floor(12)-9.01+1
 
@@ -372,7 +359,7 @@ def test_dict_returning_metrics_flatten_through_score(monkeypatch: pytest.Monkey
     metric = registry.get("sigmos").fn
     _stub(metric, [np.arange(7, dtype=np.float32).reshape(1, 7) + 1.0])
     try:
-        row = api.score(np.zeros(48000, dtype=np.float32), ["sigmos"], sr=48000)
+        row = api.score(np.full(48000, 0.1, dtype=np.float32), ["sigmos"], sr=48000)
     finally:
         metric._session = None
     assert set(row) == {f"sigmos.{d}" for d in DIMENSIONS}
@@ -383,7 +370,7 @@ def test_scalar_metrics_do_not_flatten() -> None:
     metric = registry.get("utmos").fn
     _stub(metric, [np.array([4.2], dtype=np.float32)], ("wave",))
     try:
-        row = api.score(np.zeros(16000, dtype=np.float32), ["utmos"], sr=16000)
+        row = api.score(np.full(16000, 0.1, dtype=np.float32), ["utmos"], sr=16000)
     finally:
         metric._session = None
     assert row == {"utmos": pytest.approx(4.2)}
@@ -401,7 +388,6 @@ with open(FIXTURES / "mos_fixture.json") as _f:
 
 
 @pytest.mark.models
-@needs_weights
 @pytest.mark.parametrize("key", sorted(PARITY))
 def test_parity_against_reference_implementations(key: str) -> None:
     """Score real clips through our frontends and compare to the reference values.
@@ -410,8 +396,6 @@ def test_parity_against_reference_implementations(key: str) -> None:
     estimator (SIGMOS) and ``torch.hub`` ``tarepan/SpeechMOS`` (UTMOS).
     """
     path = _clip_path(key)
-    if not path.is_file():
-        pytest.skip(f"clip not present in this checkout: {path}")
     expected = PARITY[key]
 
     dnsmos = DNSMOS(personalized=True)(str(path), None)
@@ -429,7 +413,6 @@ def test_parity_against_reference_implementations(key: str) -> None:
 
 
 @pytest.mark.models
-@needs_weights
 def test_scores_stay_inside_the_mos_range_on_real_audio() -> None:
     clip = str(AUDIO / "source.wav")
     for metric in (DNSMOS(personalized=True), DNSMOSP808(), SIGMOS(), UTMOS()):
@@ -479,7 +462,7 @@ def test_nisqa_segment_rejects_a_spectrogram_below_one_window() -> None:
 def test_nisqa_frontend_feeds_a_batched_segment_stack() -> None:
     metric = NISQA()
     session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
-    metric(np.zeros(16000, dtype=np.float32), 16000)
+    metric(np.full(16000, 0.1, dtype=np.float32), 16000)
     segments = session.feeds[0]["segments"]
     assert segments.ndim == 5 and segments.shape[2:] == (1, 48, 15)
     assert segments.shape[0] == 1 and segments.dtype == np.float32
@@ -488,7 +471,7 @@ def test_nisqa_frontend_feeds_a_batched_segment_stack() -> None:
 def test_nisqa_returns_all_five_dimensions_in_order() -> None:
     metric = NISQA()
     _stub(metric, [np.arange(5, dtype=np.float32).reshape(1, 5) + 1.0], ("segments",))
-    scores = metric(np.zeros(16000, dtype=np.float32), 16000)
+    scores = metric(np.full(16000, 0.1, dtype=np.float32), 16000)
     assert list(scores) == list(NISQA_DIMENSIONS)
     assert scores["mos"] == 1.0 and scores["loud"] == 5.0
 
@@ -497,7 +480,7 @@ def test_nisqa_flattens_through_score() -> None:
     metric = registry.get("nisqa").fn
     _stub(metric, [np.arange(5, dtype=np.float32).reshape(1, 5) + 1.0], ("segments",))
     try:
-        row = api.score(np.zeros(16000, dtype=np.float32), ["nisqa"], sr=16000)
+        row = api.score(np.full(16000, 0.1, dtype=np.float32), ["nisqa"], sr=16000)
     finally:
         metric._session = None
     assert set(row) == {f"nisqa.{d}" for d in NISQA_DIMENSIONS}
@@ -507,8 +490,8 @@ def test_nisqa_flattens_through_score() -> None:
 def test_nisqa_hop_and_window_adapt_to_the_sample_rate_without_resampling() -> None:
     metric = NISQA()
     session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
-    metric(np.zeros(44100, dtype=np.float32), 44100)  # one second at 44.1 kHz
-    metric(np.zeros(16000, dtype=np.float32), 16000)  # one second at 16 kHz
+    metric(np.full(44100, 0.1, dtype=np.float32), 44100)  # one second at 44.1 kHz
+    metric(np.full(16000, 0.1, dtype=np.float32), 16000)  # one second at 16 kHz
     # a 10 ms hop at either rate means ~100 frames/s, hence the same segment count;
     # a silent resample to 16 kHz would still give this, so also check the frames
     counts = [feed["segments"].shape[1] for feed in session.feeds]
@@ -522,14 +505,14 @@ def test_nisqa_rejects_audio_shorter_than_one_segment(n_samples: int) -> None:
     metric = NISQA()
     _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
     with pytest.raises(ValueError, match="too short"):
-        metric(np.zeros(n_samples, dtype=np.float32), 16000)
+        metric(np.full(n_samples, 0.1, dtype=np.float32), 16000)
 
 
 def test_nisqa_scores_exactly_one_segment() -> None:
     metric = NISQA()
     session = _stub(metric, [np.full((1, 5), 4.0, dtype=np.float32)], ("segments",))
     # 15 frames at a 160-sample hop: 1 + n//160 == 15
-    metric(np.zeros(14 * 160, dtype=np.float32), 16000)
+    metric(np.full(14 * 160, 0.1, dtype=np.float32), 16000)
     assert session.feeds[0]["segments"].shape[:2] == (1, 1)
 
 
@@ -555,7 +538,7 @@ def test_nisqa_non_finite_model_output_raises() -> None:
     metric = NISQA()
     _stub(metric, [np.full((1, 5), np.nan, dtype=np.float32)], ("segments",))
     with pytest.raises(ValueError, match="non-finite"):
-        metric(np.zeros(16000, dtype=np.float32), 16000)
+        metric(np.full(16000, 0.1, dtype=np.float32), 16000)
 
 
 def test_nisqa_downmixes_stereo() -> None:
@@ -572,14 +555,10 @@ with open(FIXTURES / "nisqa_fixture.json") as _f:
 
 
 def _nisqa_clip_path(key: str) -> Path:
-    if not key.startswith("demo/"):
-        return Path(__file__).parent.parent / key
-    name = Path(key).name
-    return DEMO / name if (DEMO / name).is_file() else DEMO / "outputs" / name
+    return DEMO / Path(key).name if key.startswith("demo/") else Path(__file__).parent.parent / key
 
 
 @pytest.mark.models
-@needs_weights
 @pytest.mark.parametrize("key", sorted(NISQA_PARITY))
 def test_nisqa_parity_against_the_torch_reference(key: str) -> None:
     """Our numpy frontend vs upstream's librosa frontend, both into the NISQA model.
@@ -589,8 +568,6 @@ def test_nisqa_parity_against_the_torch_reference(key: str) -> None:
     exercised too.
     """
     path = _nisqa_clip_path(key)
-    if not path.is_file():
-        pytest.skip(f"clip not present in this checkout: {path}")
     scores = NISQA()(str(path), None)
     for dim, want in NISQA_PARITY[key]["nisqa"].items():
         assert scores[dim] == pytest.approx(want, abs=NISQA_TOL), dim
