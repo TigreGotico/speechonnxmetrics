@@ -298,6 +298,34 @@ class TestAudio:
         assert sr == 8000
         assert x.shape[0] == pytest.approx(samples.shape[0] * 8000 / SR, abs=1)
 
+    def test_raw_pcm_bytes_with_rate(self):
+        pcm = np.array([0, 16384, -16384], dtype="<i2").tobytes()
+        x, sr = load_audio(pcm, sample_rate=16000)
+        assert sr == 16000
+        np.testing.assert_array_equal(x, np.array([0.0, 0.5, -0.5], dtype=np.float32))
+
+    def test_raw_pcm_bytes_without_rate_raise(self):
+        pcm = np.array([0, 16384, -16384], dtype="<i2").tobytes()
+        with pytest.raises(ValueError, match="RIFF/WAVE.*sample_rate="):
+            load_audio(pcm)
+
+    def test_wav_bytes_keep_header_rate(self):
+        samples = np.array([0, 16384, -16384], dtype=np.int16)
+        x, sr = load_audio(_MemoryWav(samples, 8000).bytes, sample_rate=16000)
+        assert sr == 8000
+        np.testing.assert_array_equal(x, np.array([0.0, 0.5, -0.5], dtype=np.float32))
+
+    def test_flac_bytes_decode_with_and_without_rate(self):
+        import soundfile as sf
+        samples = np.array([0, 16384, -16384, 8192], dtype=np.int16)
+        buf = io.BytesIO()
+        sf.write(buf, samples, 22050, format="FLAC", subtype="PCM_16")
+        expected = np.array([0.0, 0.5, -0.5, 0.25], dtype=np.float32)
+        for rate in (None, 16000):
+            x, sr = load_audio(buf.getvalue(), sample_rate=rate)
+            assert sr == 22050
+            np.testing.assert_array_equal(x, expected)
+
     def test_missing_file_raises(self):
         with pytest.raises(AudioLoadError):
             load_audio("/nonexistent/path/does-not-exist.wav")

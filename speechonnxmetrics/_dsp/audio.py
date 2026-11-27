@@ -68,11 +68,27 @@ def _read_soundfile(source: str | io.BytesIO) -> tuple[np.ndarray, int]:
         raise AudioLoadError(f"cannot decode audio: {exc}") from exc
 
 
-def _load_bytes(data: bytes) -> tuple[np.ndarray, int]:
+def _decode_file_bytes(data: bytes) -> tuple[np.ndarray, int]:
     try:
         return _read_soundfile(io.BytesIO(data))
     except ImportError:
         return _read_wave_bytes(data)
+
+
+def _load_bytes(data: bytes, sample_rate: int | None) -> tuple[np.ndarray, int]:
+    if data[:4] == b"RIFF" and data[8:12] == b"WAVE":
+        return _decode_file_bytes(data)
+    try:
+        return _decode_file_bytes(data)
+    except AudioLoadError as exc:
+        if sample_rate is None:
+            raise AudioLoadError(
+                "bytes input is not an audio file: pass file bytes such as WAV "
+                f"(RIFF/WAVE header), or raw int16 PCM bytes with sample_rate= ({exc})"
+            ) from exc
+    if len(data) % 2:
+        raise AudioLoadError(f"raw int16 PCM bytes need an even length, got {len(data)}")
+    return np.frombuffer(data, dtype="<i2"), sample_rate
 
 
 def _load_path(path: str | Path) -> tuple[np.ndarray, int]:
@@ -91,8 +107,9 @@ def load_audio(
 ) -> tuple[np.ndarray, int]:
     """Load/coerce ``source`` into float32 mono ``[-1, 1]``; returns ``(audio, sample_rate)``.
 
-    ``source`` may be a filesystem path, raw file bytes (e.g. a WAV blob), or an
-    already-decoded numpy array — in which case ``sample_rate`` is required. Resamples
+    ``source`` may be a filesystem path, file bytes (WAV, FLAC, OGG), raw int16 PCM
+    bytes, or a decoded numpy array. Raw PCM bytes and arrays need ``sample_rate``;
+    file bytes take the rate from their header. Resamples
     to ``target_sr`` when given, via the shared kaiser-windowed sinc resampler.
     """
     if isinstance(source, np.ndarray):
@@ -100,7 +117,7 @@ def load_audio(
             raise AudioLoadError("sample_rate is required when source is a numpy array")
         x, sr = source, sample_rate
     elif isinstance(source, (bytes, bytearray)):
-        x, sr = _load_bytes(bytes(source))
+        x, sr = _load_bytes(bytes(source), sample_rate)
     elif isinstance(source, (str, Path)):
         x, sr = _load_path(source)
     else:
