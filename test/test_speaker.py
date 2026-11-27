@@ -1,4 +1,5 @@
 import builtins
+import subprocess
 import sys
 
 import numpy as np
@@ -147,7 +148,19 @@ def test_missing_speakeronnx_raises_actionable_import_error(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", fake_import)
 
     with pytest.raises(ImportError, match=r"pip install speechonnxmetrics\[speaker\]"):
-        import speechonnxmetrics.speaker  # noqa: F401
+        from speechonnxmetrics.speaker import SpeakerSimilarity  # noqa: F401
+
+
+def test_verification_metrics_import_without_speakeronnx():
+    probe = (
+        "import sys; sys.modules['speakeronnx'] = None; "
+        "from speechonnxmetrics.speaker import eer, min_dcf, equal_error_threshold; "
+        "print(eer([0.9, 0.8, 0.7, 0.3, 0.2, 0.1], [1, 1, 1, 0, 0, 0]), "
+        "eer([0.5, 0.5, 0.5, 0.5], [1, 1, 0, 0]))"
+    )
+    out = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    assert [float(v) for v in out.stdout.split()] == [0.0, 0.5]
 
 
 # --- construction is lazy: no network/disk touched until first use -------------------------

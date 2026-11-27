@@ -9,10 +9,9 @@ see: lect-fidelity.md
 
 This page is the lookup table for each metric, grouped by family. The
 [metric guides](metric-guides/README.md) explain the history and use of each metric.
-`speechonnxmetrics.list_metrics()` prints the registered set. The table gives
-the range and direction of each metric. The registry metadata
-(`RegistryEntry.range` and `RegistryEntry.higher_is_better`) differs from it for
-`cer`, `estoi` and `wip` ([#8](https://github.com/TigreGotico/speechonnxmetrics/issues/8)).
+`speechonnxmetrics.list_metrics()` prints the registered set. The ranges and
+directions in the tables match the registry (`RegistryEntry.range` and
+`RegistryEntry.higher_is_better`).
 
 `score()` and `score_batch()` dispatch only `kind="audio"` metrics. `kind="text"`
 metrics (WER/CER/MER/WIL/WIP) compare strings and are called from
@@ -141,8 +140,8 @@ Guides: [speaker_similarity](metric-guides/speaker-similarity.md) · [eer + min_
   convention, c_miss = c_fa = 1). Pure numpy.
 - `equal_error_threshold(scores, labels)`: score threshold where FAR is about equal to FRR.
 
-The three verification metrics are numpy code. But `speechonnxmetrics.speaker`
-imports `speakeronnx`, so the import needs the `speaker` extra for all four functions ([issue #7](https://github.com/TigreGotico/speechonnxmetrics/issues/7)).
+The three verification metrics are numpy code and need no extra. Only
+`speaker_similarity` and `SpeakerSimilarity` need the `speaker` extra.
 
 ```python
 from speechonnxmetrics.speaker import eer, equal_error_threshold, min_dcf
