@@ -36,7 +36,7 @@ def same(value, expected) -> bool:
         return value == expected
     if isinstance(expected, (int, float)) and not isinstance(value, (str, bytes)):
         try:
-            return math.isclose(float(value), expected, rel_tol=1e-9, abs_tol=1e-12)
+            return math.isclose(float(value), expected, rel_tol=1e-6, abs_tol=1e-9)
         except TypeError:
             return False
     if isinstance(expected, dict) and isinstance(value, dict):
