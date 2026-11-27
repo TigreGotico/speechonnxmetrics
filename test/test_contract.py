@@ -38,7 +38,6 @@ def test_non_wav_bytes_without_rate_raise():
         load_audio(pcm)
 
 
-@pytest.mark.xfail(strict=True, reason="speechonnxmetrics#13")
 def test_raw_pcm_bytes_with_rate():
     pcm = np.array([0, 16384, -16384], dtype="<i2").tobytes()
     x, sr = load_audio(pcm, sample_rate=16000)
