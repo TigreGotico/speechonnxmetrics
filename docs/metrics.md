@@ -9,9 +9,10 @@ see: lect-fidelity.md
 
 This page is the lookup table for each metric, grouped by family. The
 [metric guides](metric-guides/README.md) explain the history and use of each metric.
-`speechonnxmetrics.list_metrics()` prints the registered set. The ranges and
-directions come from the registry (`RegistryEntry.range` and
-`RegistryEntry.higher_is_better`).
+`speechonnxmetrics.list_metrics()` prints the registered set. The table gives
+the range and direction of each metric. The registry metadata
+(`RegistryEntry.range` and `RegistryEntry.higher_is_better`) differs from it for
+`cer`, `estoi` and `wip` ([#8](https://github.com/TigreGotico/speechonnxmetrics/issues/8)).
 
 `score()` and `score_batch()` dispatch only `kind="audio"` metrics. `kind="text"`
 metrics (WER/CER/MER/WIL/WIP) compare strings and are called from
