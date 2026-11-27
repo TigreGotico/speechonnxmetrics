@@ -1,52 +1,64 @@
-# DNSMOS and DNSMOS P.808 — MOS prediction for noise suppression
+# DNSMOS and DNSMOS P.808
+<!-- agent-hint
+covers: what dnsmos and dnsmos_p808 predict, their range, when to use them and their call
+source: speechonnxmetrics/mos/dnsmos.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "metric-guides/dnsmos.md"
+see: sigmos.md
+-->
 
-Covers two registry metrics: `dnsmos` (the P.835 triplet) and `dnsmos_p808` (a single
-P.808 score).
+DNSMOS predicts the quality of noise-suppressed speech without a reference. This page
+covers two registry metrics: `dnsmos`, the P.835 triplet, and `dnsmos_p808`, one P.808
+score.
 
 ## History
-DNSMOS comes from Microsoft's **Deep Noise Suppression (DNS) Challenge**, where thousands
-of enhanced clips had to be ranked but running an ITU-T listening test on all of them was
-impractical. Reddy, Gopal & Cutler introduced it in *DNSMOS: A Non-Intrusive Perceptual
-Objective Speech Quality Metric to Evaluate Noise Suppressors* (ICASSP 2021), then
-extended it in *DNSMOS P.835* (ICASSP 2022) to output the three separate scores of the
-**ITU-T P.835** protocol. The two variants map to two ITU-T recommendations:
-- **`dnsmos_p808`** predicts a single **P.808** crowdsourced-listening MOS (overall
-  quality from a crowdsourced absolute-category-rating test).
-- **`dnsmos`** predicts the **P.835** triplet: **SIG** (the speech signal alone), **BAK**
-  (background-noise intrusiveness), and **OVRL** (overall). This split is the whole point —
-  it tells "the denoiser hurt the voice" apart from "the denoiser left noise in".
 
-## What it measures
-Perceived quality of (typically noise-suppressed) speech, without a reference. The P.835
-triplet separates signal quality, background intrusiveness, and overall impression.
+DNSMOS comes from the Microsoft Deep Noise Suppression (DNS) Challenge. The challenge
+had too many enhanced clips for an ITU-T listening test on each one. Reddy, Gopal and
+Cutler introduced DNSMOS at ICASSP 2021. *DNSMOS P.835* (ICASSP 2022) added the three
+scores of the ITU-T P.835 protocol.
 
-## Range & direction
-Each score 1–5, **higher is better**. `dnsmos` → dict `sig`, `bak`, `ovrl` (flattened to
-`dnsmos.sig`, `dnsmos.bak`, `dnsmos.ovrl`). `dnsmos_p808` → scalar float. Native rate
-16 kHz. DNSMOS averages 9.01 s windows at a 1 s hop over long audio. Note: the network
-emits an uncalibrated scale and a per-dimension polynomial maps it onto MOS — this package
-applies that post-processing; omitting it gives plausible-looking but wrong numbers.
+- `dnsmos_p808` predicts one P.808 MOS: the overall quality from a crowdsourced
+  absolute category rating test.
+- `dnsmos` predicts the P.835 triplet: SIG (the speech signal), BAK (the intrusiveness
+  of the background noise) and OVRL (overall). The triplet tells a damaged voice apart
+  from residual noise.
 
-## When to use / when not
-- **Use** as the primary quality metric for denoisers and speech enhancement, and for TTS
-  as a second opinion alongside UTMOS. The SIG/BAK/OVRL split is uniquely useful for
-  diagnosing *what* an enhancement model got wrong.
-- **Do not** expect it to measure intelligibility (that is STOI) or speaker identity (that
-  is speaker_similarity). It judges quality, not content.
+## Range and direction
 
-## Domain
-Noise suppression / speech enhancement (the DNS Challenge lineage); widely reused for
-general speech-quality estimation. MIT-licensed weights — safe for commercial use.
+Each score is 1 to 5, and higher is better. `dnsmos` returns a dict that the result
+flattens to `dnsmos.sig`, `dnsmos.bak` and `dnsmos.ovrl`. `dnsmos_p808` returns a float.
+The native rate is 16 kHz. On long audio, DNSMOS averages windows of 9.01 s at a hop of
+1 s.
+
+The network gives scores on an uncalibrated scale. A polynomial for each dimension maps
+them to MOS, and this package applies it. Without that step the numbers look correct
+but are wrong.
+
+## When to use it
+
+- Use it as the main quality metric for denoisers and speech enhancement. The SIG, BAK
+  and OVRL split shows what an enhancement model did wrong.
+- Use it for TTS as a second opinion next to UTMOS.
+- Do not use it for intelligibility (use STOI) or speaker identity (use speaker
+  similarity). It measures quality, not content.
+
+The weights are MIT, so commercial use is permitted.
 
 ## In this library
+
+The call downloads the models on the first run, so this page shows it without output:
+
 ```python
 import speechonnxmetrics as s
+
 s.score("test/fixtures/audio/source.wav", ["dnsmos", "dnsmos_p808"])
-# -> {'dnsmos.sig': 3.4.., 'dnsmos.bak': 3.6.., 'dnsmos.ovrl': 2.9..,
-#     'dnsmos_p808': 3.3..}   (downloads weights on first call)
 ```
 
 ## Further reading
-Reddy, Gopal, Cutler, *DNSMOS* (ICASSP 2021) and *DNSMOS P.835* (ICASSP 2022);
-ITU-T P.808 (crowdsourced ACR) and P.835 (SIG/BAK/OVRL). Model details:
-[../models.md](../models.md).
+
+Reddy, Gopal, Cutler, *DNSMOS* (ICASSP 2021) and *DNSMOS P.835* (ICASSP 2022). ITU-T
+P.808 and P.835. [Models and licences](../models.md) gives the model details.
+
+---
+[← UTMOS](utmos.md) · [Home](../index.md) · [SIGMOS →](sigmos.md)

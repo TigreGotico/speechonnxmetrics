@@ -1,4 +1,11 @@
-# Choosing metrics — a decision guide by task
+# Choosing metrics
+<!-- agent-hint
+covers: which metrics to report for each speech task, and when not to use a metric
+source: speechonnxmetrics/registry.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "choosing.md"
+see: usage.md
+-->
 
 Read [concepts.md](concepts.md) first for the intrusive/non-intrusive and
 intelligibility/quality/similarity distinctions this page leans on. Here we go straight
@@ -81,7 +88,7 @@ what the field reports when the application cares more about one error type.
 - **SI-SDR is alignment- and reference-sensitive.** A few milliseconds of latency between
   degraded and reference tank it even when the audio is perceptually identical. Do not use it
   for TTS (no aligned reference) or when your pipeline introduces variable delay.
-- **WER has no upper bound.** A hypothesis longer than the reference can score WER > 1.0.
+- **WER and CER have no upper bound.** A hypothesis longer than the reference can score above 1.0.
   When you need a bounded, symmetric measure, use MER or WIL.
 - **PESQ is deliberately absent.** ITU-T P.862 (PESQ) licensing is incompatible with an
   open, pip-installable package, and the neural MOS predictors here supersede it for most
@@ -92,4 +99,4 @@ what the field reports when the application cares more about one error type.
   [models.md](models.md).
 
 ---
-[← Concepts](concepts.md) · [Home](index.md) · [Metrics →](metrics.md)
+[← Concepts](concepts.md) · [Home](index.md) · [Usage →](usage.md)

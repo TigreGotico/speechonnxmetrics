@@ -1,0 +1,74 @@
+[
+ {
+  "provider": "orthography2ipa",
+  "backend": "allosaurus",
+  "CLUL spoken varieties held-out recordings": {
+   "auc": 0.7001,
+   "auc_95ci": [
+    0.6609,
+    0.7378
+   ]
+  },
+  "compare-accents-pt": {
+   "auc": 1.0,
+   "auc_95ci": [
+    1.0,
+    1.0
+   ]
+  }
+ },
+ {
+  "provider": "tugaphone",
+  "backend": "allosaurus",
+  "CLUL spoken varieties held-out recordings": {
+   "auc": 0.6847,
+   "auc_95ci": [
+    0.6451,
+    0.7223
+   ]
+  },
+  "compare-accents-pt": {
+   "auc": 1.0,
+   "auc_95ci": [
+    1.0,
+    1.0
+   ]
+  }
+ },
+ {
+  "provider": "orthography2ipa",
+  "backend": "wav2vec2_espeak",
+  "CLUL spoken varieties held-out recordings": {
+   "auc": 0.7783,
+   "auc_95ci": [
+    0.7254,
+    0.8279
+   ]
+  },
+  "compare-accents-pt": {
+   "auc": 0.9881,
+   "auc_95ci": [
+    0.9286,
+    1.0
+   ]
+  }
+ },
+ {
+  "provider": "tugaphone",
+  "backend": "wav2vec2_espeak",
+  "CLUL spoken varieties held-out recordings": {
+   "auc": 0.8071,
+   "auc_95ci": [
+    0.7558,
+    0.8556
+   ]
+  },
+  "compare-accents-pt": {
+   "auc": 1.0,
+   "auc_95ci": [
+    1.0,
+    1.0
+   ]
+  }
+ }
+]
