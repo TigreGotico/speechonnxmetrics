@@ -55,3 +55,31 @@ def test_registry_import_does_not_import_onnxruntime():
         [sys.executable, "-c", probe], capture_output=True, text=True, check=True,
     ).stdout.split()
     assert out == ["0", "0"], f"import pulled in heavy deps: onnxruntime={out[0]} torch={out[1]}"
+
+
+def _in_range(value, rng):
+    low, high = rng if rng is not None else (None, None)
+    return (low is None or value >= low) and (high is None or value <= high)
+
+
+def test_cer_range_admits_insertion_heavy_error_rate():
+    from speechonnxmetrics.asr import cer
+
+    # 5 insertions over a 2-character reference: 5 / 2 = 2.5.
+    value = cer("ab", "abcdefg")
+    assert value == 2.5
+    assert _in_range(value, registry.get("cer").range)
+
+
+def test_estoi_range_is_a_correlation():
+    # ESTOI is a mean sample correlation (Jensen & Taal 2016), so it spans [-1, 1].
+    assert registry.get("estoi").range == (-1.0, 1.0)
+
+
+def test_wip_direction_matches_its_values():
+    from speechonnxmetrics.asr import wip
+
+    perfect = wip("the cat sat", "the cat sat")
+    wrong = wip("the cat sat", "a dog ran")
+    assert perfect == 1.0 and wrong == 0.0
+    assert registry.get("wip").higher_is_better is (perfect > wrong)
