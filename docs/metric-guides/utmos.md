@@ -1,43 +1,61 @@
-# UTMOS — predicted naturalness MOS
+# UTMOS
+<!-- agent-hint
+covers: what UTMOS predicts, its range, when to use it and its call
+source: speechonnxmetrics/mos/utmos.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "metric-guides/utmos.md"
+see: dnsmos.md
+-->
+
+UTMOS predicts the naturalness MOS of a clip without a reference. This page tells you
+where it comes from and when to use it.
 
 ## History
-UTMOS was the winning entry of the **VoiceMOS Challenge 2022**, a shared task on
-predicting mean-opinion scores of *synthesized* speech. It is described in Saeki, Xin,
-Nakata, Koshinaka, Takamichi & Takamichi's *UTMOS: UTokyo-SaruLab System for VoiceMOS
-Challenge 2022* (Interspeech 2022). The problem it was built to solve: TTS and voice-
-conversion research had exploded, but every paper still needed slow, expensive human
-listening tests to report a naturalness MOS. UTMOS learns to predict that human MOS
-directly from the waveform, so researchers can rank systems without a panel. The model
-here is the `utmos22_strong` variant.
+
+UTMOS won the VoiceMOS Challenge 2022, a shared task to predict the MOS of synthesized
+speech. Saeki, Xin, Nakata, Koshinaka and Takamichi describe it in *UTMOS:
+UTokyo-SaruLab System for VoiceMOS Challenge 2022* (Interspeech 2022). TTS and voice
+conversion papers need a naturalness MOS, and a listening test is slow and costly.
+UTMOS predicts the human MOS from the waveform. This package uses the `utmos22_strong`
+variant.
 
 ## What it measures
-A single **naturalness** score — the model's estimate of what a P.800-style listening
-panel would rate the clip's quality. It is trained on human ratings of synthesized speech,
-so it is tuned to the kinds of artifacts TTS and vocoders produce.
 
-## Range & direction
-1–5, **higher is better** (`utmos`, scalar float). The affine rescale onto the MOS range
-is baked into the exported ONNX graph. Native rate 16 kHz mono (resampled for you).
+UTMOS gives one naturalness score: its estimate of the rating from a P.800-style
+listening panel. Its training data is human ratings of synthesized speech, so it reacts
+to the artifacts of TTS models and vocoders.
 
-## When to use / when not
-- **Use** as the default one-number quality score for TTS and voice conversion, and as a
-  quick regression guard during model iteration.
-- **Do not** treat it as ground truth — it is a prediction of a listening test, not the
-  test (see [../concepts.md](../concepts.md), the golden rule). Do not expect calibrated
-  agreement on domains far from its training data (heavy noise, non-speech, exotic codecs).
-  For noise-suppression specifically, DNSMOS/SIGMOS are the better-matched predictors.
+## Range and direction
 
-## Domain
-Born in the TTS / voice-conversion evaluation community (VoiceMOS Challenge); today it is
-one of the most-cited quick naturalness proxies for synthesized speech.
+The range is 1 to 5, and higher is better. `utmos` returns a float. The exported ONNX
+graph holds the affine rescale to the MOS range. The native rate is 16 kHz mono, and the
+package resamples the input.
+
+## When to use it
+
+- Use it as the default quality number for TTS and voice conversion, and as a quick
+  regression check while you train a model.
+- Do not treat it as ground truth. It predicts a listening test, but it is not one. See
+  the golden rule in [Concepts](../concepts.md).
+- Do not expect calibrated scores far from its training data, such as heavy noise,
+  non-speech or unusual codecs. For noise suppression, DNSMOS and SIGMOS match the task
+  better.
 
 ## In this library
+
+The call downloads the model on the first run, so this page shows it without output:
+
 ```python
 import speechonnxmetrics as s
+
 s.score("test/fixtures/audio/source.wav", ["utmos"])
-# -> {'utmos': 4.41...}   (downloads ~30 MB of weights on first call, then caches)
 ```
 
 ## Further reading
-Saeki et al., *UTMOS: UTokyo-SaruLab System for VoiceMOS Challenge 2022*, Interspeech 2022.
-Export details and the UTMOSv2 omission: [../models.md](../models.md).
+
+Saeki et al., *UTMOS: UTokyo-SaruLab System for VoiceMOS Challenge 2022*, Interspeech
+2022. [Models and licences](../models.md) gives the export details and the reason the
+package has no UTMOSv2.
+
+---
+[← Metric guides](README.md) · [Home](../index.md) · [DNSMOS →](dnsmos.md)

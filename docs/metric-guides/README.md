@@ -1,29 +1,31 @@
-# Per-metric guides
+# Metric guides
+<!-- agent-hint
+covers: one teaching page for each metric or family, and the order to read them
+source: docs/metric-guides/
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "metric-guides/README.md"
+see: utmos.md
+-->
 
-One teaching page per metric (or tight family): where it came from, what it measures,
-its range and direction, when to use it and when not, the domain it lives in, and the
-exact call in this library. These complement the [metrics reference](../metrics.md),
-which is the terse lookup table.
+Each guide covers one metric or one family of metrics: where it comes from, what it
+measures, its range and direction, when to use it, and the call in this library. The
+[metrics reference](../metrics.md) is the short lookup table. Read
+[Concepts](../concepts.md) and [Choosing metrics](../choosing.md) first.
 
-Start with [concepts.md](../concepts.md) and [choosing.md](../choosing.md) if you have
-not yet.
+| Family | Guide | What you get there |
+| :--- | :--- | :--- |
+| No-reference MOS | [UTMOS](utmos.md) | Naturalness MOS for synthesized speech |
+| No-reference MOS | [DNSMOS](dnsmos.md) | DNSMOS P.835 and P.808, for noise suppression |
+| No-reference MOS | [SIGMOS](sigmos.md) | The seven P.804 quality dimensions |
+| No-reference MOS | [NISQA](nisqa.md) | Overall quality and four dimensions, with NonCommercial weights |
+| Intrusive | [STOI and ESTOI](stoi-estoi.md) | Intelligibility |
+| Intrusive | [SI-SDR, SDR and SNR](si_sdr-sdr-snr.md) | Signal fidelity in dB |
+| Intrusive | [MCD](mcd.md) | Mel-cepstral distortion for TTS and voice conversion |
+| Intrusive | [Pitch](pitch.md) | Log-F0 RMSE and voiced/unvoiced error |
+| Intrusive | [Spectral distances](spectral.md) | LSD, MSD and mel-L1 |
+| Text | [WER family](wer-family.md) | WER, CER, MER, WIL and WIP |
+| Speaker | [Speaker similarity](speaker-similarity.md) | Cosine similarity of speaker embeddings |
+| Speaker | [EER and minDCF](eer-min_dcf.md) | Speaker verification metrics |
 
-## No-reference MOS (predict a listening test)
-- [utmos.md](utmos.md) — UTMOS naturalness MOS for synthesized speech
-- [dnsmos.md](dnsmos.md) — DNSMOS and DNSMOS P.808, for noise suppression
-- [sigmos.md](sigmos.md) — SIGMOS, P.804 degradation dimensions
-- [nisqa.md](nisqa.md) — NISQA multidimensional quality (NonCommercial weights)
-
-## Intrusive (reference-based)
-- [stoi-estoi.md](stoi-estoi.md) — STOI / ESTOI intelligibility
-- [si_sdr-sdr-snr.md](si_sdr-sdr-snr.md) — SI-SDR, SDR, SNR signal fidelity
-- [mcd.md](mcd.md) — mel-cepstral distortion, the TTS/VC workhorse
-- [pitch.md](pitch.md) — log-F0 RMSE and voiced/unvoiced error
-- [spectral.md](spectral.md) — LSD, MSD, mel-L1 spectral distances
-
-## ASR / text
-- [wer-family.md](wer-family.md) — WER, CER, MER, WIL, WIP
-
-## Speaker
-- [speaker-similarity.md](speaker-similarity.md) — cosine speaker similarity
-- [eer-min_dcf.md](eer-min_dcf.md) — EER and minDCF verification metrics
+---
+[← Models and licences](../models.md) · [Home](../index.md) · [UTMOS →](utmos.md)

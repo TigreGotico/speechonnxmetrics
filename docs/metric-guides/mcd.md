@@ -1,46 +1,58 @@
-# MCD — mel-cepstral distortion
+# MCD
+<!-- agent-hint
+covers: what mcd measures, its range, when to use it and its call
+source: speechonnxmetrics/intrusive/cepstral.py, speechonnxmetrics/_dsp/dtw.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "metric-guides/mcd.md"
+see: pitch.md
+-->
 
-## History
-MCD was defined by Robert Kubichek in *Mel-Cepstral Distance Measure for Objective Speech
-Quality Assessment* (IEEE Pacific Rim Conference, PACRIM, 1993). It was proposed in the
-speech-**coding** era as an objective measure of how far a coded/synthesized signal's
-spectral envelope had drifted from the original — a cheap stand-in for listening tests when
-comparing codecs. Over the following decades it became the *workhorse* objective metric for
-**text-to-speech and voice conversion**, because it captures exactly the spectral-envelope
-differences those systems get judged on, and it tolerates the loose time-alignment typical
-of synthesized speech.
+MCD (mel-cepstral distortion) measures how far the spectral envelope of a clip is from
+that of a reference with the same words.
 
-## What it measures
-The distance (in dB) between the **mel-cepstral coefficients** of two signals — essentially
-how different their spectral envelopes are, frame by frame. Lower means the synthesized or
-converted speech is acoustically closer to the target.
+## Example
 
-## Range & direction
-Unbounded **dB**, **lower is better**. Intrusive: pass `ref=`. Unlike SI-SDR, MCD aligns the
-two signals with **dynamic time warping** over frames (see `speechonnxmetrics/_dsp/dtw.py`),
-so small timing differences do not wreck it — which is precisely why it suits TTS/VC where
-the reference and output say the *same words* but not at the same instants.
-
-## When to use / when not
-- **Use** for TTS, voice conversion, and vocoder/neural-codec resynthesis, where you have a
-  parallel ground-truth utterance of the same content and want a spectral-fidelity number.
-- **Do not** compute MCD between clips of *different* content — the comparison is only
-  meaningful for the same utterance. It is not a quality/naturalness score (use a MOS
-  predictor) and not a speaker-identity score (use speaker_similarity).
-
-## Domain
-Speech coding (origin) → the standard objective metric of TTS and voice-conversion research
-today.
-
-## In this library
 ```python
 import speechonnxmetrics as s
-s.score("test/fixtures/audio/facodec_aria.wav", ["mcd"],
-        ref="test/fixtures/audio/source.wav")
-# -> {'mcd': 10.45...}   (dB; lower is closer to the reference)
+
+ref = "test/fixtures/audio/source.wav"
+deg = "test/fixtures/audio/facodec_aria.wav"
+print(s.score(deg, ["mcd"], ref=ref))  # {'mcd': 10.45972843367896}
 ```
-Validated against `pymcd` (see [../metrics.md](../metrics.md)).
+
+## History
+
+Robert Kubichek defined MCD in *Mel-Cepstral Distance Measure for Objective Speech
+Quality Assessment* (IEEE PACRIM, 1993). It came from speech coding, as a low-cost
+measure of how far a coded signal drifts from the original. TTS and voice conversion
+research then took it as their main objective metric. It measures the spectral envelope
+differences that those systems change.
+
+## What it measures
+
+MCD is the distance, in dB, between the mel-cepstral coefficients of two signals, frame
+by frame. A lower value means that the output is acoustically closer to the target.
+
+## Range and direction
+
+The value is in dB with no bound, and lower is better. MCD is intrusive, so pass
+`ref=`. It aligns the two signals with dynamic time warping over frames
+(`speechonnxmetrics/_dsp/dtw.py`). Thus small timing differences have little effect.
+This suits TTS and voice conversion, where the output says the same words as the
+reference but not at the same instants.
+
+## When to use it
+
+- Use it for TTS, voice conversion and vocoder or codec resynthesis, when you have a
+  reference utterance with the same content.
+- Do not compare clips with different content.
+- It does not measure naturalness (use a MOS predictor) or speaker identity (use
+  speaker similarity).
 
 ## Further reading
+
 Kubichek, *Mel-Cepstral Distance Measure for Objective Speech Quality Assessment*, IEEE
 PACRIM 1993.
+
+---
+[← SI-SDR, SDR and SNR](si_sdr-sdr-snr.md) · [Home](../index.md) · [Pitch →](pitch.md)

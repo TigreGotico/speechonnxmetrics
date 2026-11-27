@@ -1,9 +1,16 @@
 # CLI reference
+<!-- agent-hint
+covers: the speechonnxmetrics command, its score and list subcommands, flags and exit status
+source: speechonnxmetrics/cli.py, pyproject.toml [project.scripts]
+generated: no
+verify: diff <(speechonnxmetrics score --help) <(sed -n '/^\$ speechonnxmetrics score --help/,/^```/p' docs/cli.md | sed '1d;$d')
+see: metrics.md
+-->
 
-Installing the package exposes a `speechonnxmetrics` console script (entry point
-`speechonnxmetrics.cli:main`). Without installing, run `python -m speechonnxmetrics.cli`.
-The tool has two subcommands, `score` and `list`, described below with their exact
-help text and real example invocations against the bundled fixture audio.
+This page shows the `speechonnxmetrics` command. The install adds it as a console
+script with the entry point `speechonnxmetrics.cli:main`. You can also run
+`python -m speechonnxmetrics.cli`. The command has two subcommands, `score` and
+`list`. The examples use the fixture clips in the repository.
 
 ```
 $ speechonnxmetrics --help
@@ -42,6 +49,7 @@ options:
 - `--ref` is required when any chosen metric is intrusive, and applies to every positional `audio` argument.
 - Output is a table by default, one row per file, one column per flattened metric key.
 - `--json` emits a `{path: result}` object instead of a table.
+
 - Exit status is `1` on a resolution error, or when any item recorded a per-file `_errors` entry.
 - On a partial error, successful rows still print and errors go to stderr.
 
@@ -52,19 +60,26 @@ Intrusive metrics with a reference:
 ```
 $ speechonnxmetrics score test/fixtures/audio/facodec_aria.wav \
       --ref test/fixtures/audio/source.wav --metrics stoi,mcd,si_sdr
-audio                                 mcd                 si_sdr               stoi
-test/fixtures/audio/facodec_aria.wav  10.459728433678961  -26.937894650414812  0.6620030195244008
+audio                                 mcd                si_sdr               stoi
+test/fixtures/audio/facodec_aria.wav  10.45972843367896  -26.937894650414812  0.6620030195244008
 ```
 
-No-reference MOS, JSON output (downloads models on first run):
+JSON output:
+
+```
+$ speechonnxmetrics score test/fixtures/audio/facodec_aria.wav \
+      --ref test/fixtures/audio/source.wav --metrics stoi --json
+{
+  "test/fixtures/audio/facodec_aria.wav": {
+    "stoi": 0.6620030195244008
+  }
+}
+```
+
+A no-reference MOS metric needs no `--ref`. It downloads its model on the first run:
 
 ```
 $ speechonnxmetrics score test/fixtures/audio/source.wav --metrics utmos --json
-{
-  "test/fixtures/audio/source.wav": {
-    "utmos": 4.411556243896484
-  }
-}
 ```
 
 ## `list`
@@ -108,4 +123,4 @@ wip          text   True       False
 objects.
 
 ---
-[← Usage](usage.md) · [Home](index.md) · [Models →](models.md)
+[← Usage](usage.md) · [Home](index.md) · [Metrics reference →](metrics.md)

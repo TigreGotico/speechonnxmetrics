@@ -1,4 +1,11 @@
-# Concepts: the mental model before the metrics
+# Concepts
+<!-- agent-hint
+covers: reference against no-reference metrics, MOS, the three axes and the sample-rate and alignment traps
+source: speechonnxmetrics/registry.py, speechonnxmetrics/base.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "concepts.md"
+see: choosing.md
+-->
 
 This is the page to read first. It builds the vocabulary the rest of the docs assume.
 The [metrics reference](metrics.md) tells you *what each metric is*. This page tells you
@@ -121,4 +128,4 @@ is a fast, cheap, repeatable proxy for a human judgement, and it is only ever as
 as that proxy relationship.
 
 ---
-[Home](index.md) · [Choosing metrics →](choosing.md)
+[← Install](install.md) · [Home](index.md) · [Choosing metrics →](choosing.md)
