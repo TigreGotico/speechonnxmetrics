@@ -39,6 +39,15 @@ def hamming(win_length: int) -> np.ndarray:
     return 0.54 - 0.46 * np.cos(2.0 * np.pi * k / (win_length - 1))
 
 
+def povey(win_length: int) -> np.ndarray:
+    """Kaldi's ``povey`` window: a symmetric Hann window raised to the power 0.85."""
+    k = np.arange(win_length, dtype=np.float64)
+    return (0.5 - 0.5 * np.cos(2.0 * np.pi * k / (win_length - 1))) ** 0.85
+
+
+_WINDOWS = {"hamming": hamming, "povey": povey}
+
+
 def mel_banks(
     num_bins: int, padded_window: int, sample_rate: float,
     low_freq: float = _LOW_FREQ, high_freq: float = 0.0,
@@ -67,12 +76,16 @@ def mel_banks(
 
 def fbank(
     waveform: np.ndarray, sample_rate: float, win_length: int, hop_length: int,
-    num_mel_bins: int, dither: float = 0.0,
+    num_mel_bins: int, dither: float = 0.0, *, window: str = "hamming",
+    low_freq: float = _LOW_FREQ, high_freq: float = 0.0, floor: float = _EPS32,
 ) -> np.ndarray:
     """Log-mel filterbank ``[frames, num_mel_bins]`` matching ``kaldi.fbank``.
 
     ``win_length``/``hop_length`` are in samples (Kaldi takes milliseconds; the caller
     converts). Frames are snipped to those that fit entirely, per ``snip_edges=True``.
+    ``window`` is ``"hamming"`` (the Kaldi fbank default) or ``"povey"`` (the Kaldi MFCC
+    default); ``low_freq``/``high_freq`` bound the mel banks as in :func:`mel_banks`.
+    ``floor`` is the smallest energy before the log, float32 epsilon as in Kaldi.
     """
     x = np.asarray(waveform, dtype=np.float64).reshape(-1)
     padded_window = 1
@@ -91,13 +104,15 @@ def fbank(
     # pre-emphasis with a replicated first sample, matching Kaldi's edge handling
     shifted = np.concatenate([frames[:, :1], frames[:, :-1]], axis=1)
     frames = frames - _PREEMPH * shifted
-    frames = frames * hamming(win_length)[None, :]
+    frames = frames * _WINDOWS[window](win_length)[None, :]
     if padded_window != win_length:
         frames = np.pad(frames, ((0, 0), (0, padded_window - win_length)))
 
     power = np.abs(np.fft.rfft(frames, n=padded_window, axis=1)) ** 2
-    banks = np.pad(mel_banks(num_mel_bins, padded_window, sample_rate), ((0, 0), (0, 1)))
-    return np.log(np.maximum(power @ banks.T, _EPS32)).astype(np.float32)
+    banks = np.pad(
+        mel_banks(num_mel_bins, padded_window, sample_rate, low_freq, high_freq), ((0, 0), (0, 1))
+    )
+    return np.log(np.maximum(power @ banks.T, floor)).astype(np.float32)
 
 
 def deltas(features: np.ndarray, win_length: int = 5) -> np.ndarray:

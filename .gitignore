@@ -14,3 +14,4 @@ htmlcov/
 out/
 .venv/
 venv/
+!test/fixtures/tiny_*.onnx

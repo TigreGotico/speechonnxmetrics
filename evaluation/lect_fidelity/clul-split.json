@@ -1,0 +1,66 @@
+{
+ "corpus": "Jarbas/SpokenPortugueseGeographicalSocialVarieties_splits",
+ "split": "tugalect split with its defaults: the recordings of each lect sorted by name, every fourth held out starting at the first",
+ "training": {
+  "pt-BR": {
+   "a-macarronada": 40,
+   "arte-urbana": 68,
+   "bichinho": 107,
+   "criar-filhos": 130,
+   "economia-e-sociedade": 86,
+   "eu-gosto-dela-demais": 64,
+   "muito-iguais-e-muito-diferentes": 110,
+   "nada-ciumenta": 89,
+   "o-acidente": 73,
+   "o-mundo-do-direito": 56,
+   "o-plano-real": 85,
+   "samba": 54,
+   "surpresas-da-fotografia": 104,
+   "trem-de-ferro": 16,
+   "viver-com-os-outros": 62
+  },
+  "pt-PT": {
+   "amassar-e-cozer": 84,
+   "ao-volante": 62,
+   "as-grandes-cidades": 58,
+   "boa-pontaria": 74,
+   "bom-senso-e-bom-rosto": 92,
+   "bruxedos": 74,
+   "desporto-e-dinheiro": 67,
+   "homens-e-bichos": 41,
+   "jogar-futebol": 51,
+   "na-base-militar-de-beja": 41,
+   "o-leiloeiro": 35,
+   "o-linho": 51,
+   "o-pai-da-medicina": 29,
+   "o-quotidiano-e-a-lei": 30,
+   "o-trabalho-e-a-posse-da-terra": 77,
+   "os-poderes-do-chefe-de-estado": 38,
+   "saber-vender": 90,
+   "ser-pastor": 60,
+   "um-mal-desconhecido": 81,
+   "um-meio-pequeno": 64,
+   "um-namoro-de-outros-tempos": 125,
+   "vida-de-estudante": 45
+  }
+ },
+ "held_out": {
+  "pt-BR": {
+   "a-fazenda": 140,
+   "comer-bem-e-falar-bem": 50,
+   "festa-de-estudantes": 112,
+   "o-jogo-do-bicho": 113,
+   "se-eu-mandasse": 46
+  },
+  "pt-PT": {
+   "a-juventude-ontem-e-hoje": 91,
+   "bavaroise": 39,
+   "cartografia-portuguesa": 43,
+   "jornalismo-em-directo": 41,
+   "o-marido-ideal": 62,
+   "os-amores-de-camilo": 90,
+   "um-culto-tradicional": 48,
+   "um-sonho": 64
+  }
+ }
+}
