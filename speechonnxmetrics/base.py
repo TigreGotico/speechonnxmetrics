@@ -37,6 +37,15 @@ DEFAULT_PROVIDERS = ["CPUExecutionProvider"]
 #: the code that calls ``score()``/``score_batch()``.
 PROVIDERS_ENV_VAR = "SPEECHONNXMETRICS_PROVIDERS"
 
+#: One step of 16-bit PCM. A clip whose peak stays below it holds no sample that a
+#: 16-bit file can tell apart from zero, so it is digital silence.
+SILENCE_PEAK = 1.0 / 32768.0
+
+
+class SilentAudioError(ValueError):
+    """Raised when a no-reference metric gets digital silence. A quality judge has no
+    speech to rate in such a clip, and the score it would return is meaningless."""
+
 
 def _env_providers() -> list[str]:
     """Parse :data:`PROVIDERS_ENV_VAR`; falls back to :data:`DEFAULT_PROVIDERS` when
@@ -215,6 +224,8 @@ class OnnxMetric(abc.ABC):
         if self.intrusive and ref is None:
             raise ValueError(f"metric {self.name!r} is intrusive and requires ref=...")
         audio, out_sr = self._load(deg, sr)
+        if not self.intrusive and audio.size and np.max(np.abs(audio)) < SILENCE_PEAK:
+            raise SilentAudioError(f"metric {self.name!r} cannot rate digital silence")
         feed = self._frontend(audio, out_sr)
         outputs = self.session.run(None, feed)
         return self._postprocess(outputs)

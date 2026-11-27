@@ -21,7 +21,7 @@ import numpy as np
 import scipy.signal as sig
 import soundfile as sf
 
-DEMO = Path("/home/miro/AgentWorkspaces/ml/voiceclonnx/demo")
+DEMO = Path(__file__).resolve().parents[3] / "voiceclonnx" / "demo"
 OUT_DIR = Path(__file__).parent / "audio"
 SR_IN = 16000
 SR_OUT = 10000

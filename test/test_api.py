@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import os
+import sys
+import wave
 
 import numpy as np
 import pytest
 
 import speechonnxmetrics.registry as registry
-from speechonnxmetrics import score, score_batch
+from speechonnxmetrics import SilentAudioError, score, score_batch
 from speechonnxmetrics.base import ModelEntry, OnnxMetric
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures", "audio")
@@ -101,6 +103,60 @@ def test_score_batch_none_audio_isolated_not_batch_aborting(register_fake):
     assert results[0]["fake_counting"] is None
     assert "fake_counting" in results[0]["_errors"]
     assert results[1]["fake_counting"] == pytest.approx(0.42)
+
+
+def _write_pcm16(path, samples: np.ndarray, sr: int = 16000) -> str:
+    with wave.open(str(path), "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes(samples.astype(np.int16).tobytes())
+    return str(path)
+
+
+@pytest.fixture(params=["soundfile", "stdlib-wave"])
+def decoder(request, monkeypatch):
+    """Run a test once through soundfile and once through the stdlib WAV fallback."""
+    if request.param == "soundfile":
+        import soundfile  # noqa: F401 - the audio extra is part of the test install
+    else:
+        monkeypatch.setitem(sys.modules, "soundfile", None)
+    return request.param
+
+
+def test_score_batch_reports_an_undecodable_file_and_finishes_the_batch(register_fake, decoder, tmp_path):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    corrupt = tmp_path / "corrupt.wav"
+    corrupt.write_bytes(b"root:x:0:0:root:/root:/bin/bash\n" * 64)
+    results = score_batch([SOURCE_WAV, str(corrupt), SOURCE_WAV], ["fake_counting"])
+    assert [row["fake_counting"] for row in results] == [pytest.approx(0.42), None, pytest.approx(0.42)]
+    assert "cannot decode audio" in results[1]["_errors"]["fake_counting"]
+    assert "_errors" not in results[0] and "_errors" not in results[2]
+
+
+def test_score_batch_reports_a_silent_clip_as_invalid(register_fake, tmp_path):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    silent = _write_pcm16(tmp_path / "silent.wav", np.zeros(2 * 16000))
+    results = score_batch([SOURCE_WAV, silent], ["fake_counting"])
+    assert results[0]["fake_counting"] == pytest.approx(0.42)
+    assert results[1]["fake_counting"] is None
+    assert "digital silence" in results[1]["_errors"]["fake_counting"]
+
+
+def test_a_clip_at_one_16_bit_step_is_scored(register_fake, tmp_path):
+    metric = _CountingMetric()
+    register_fake(registry.RegistryEntry(name="fake_counting", kind="audio", intrusive=False, requires_download=True, fn=metric))
+    quiet = np.zeros(2 * 16000)
+    quiet[::2] = 1  # one step of 16-bit PCM, the quietest sound such a file holds
+    row = score(_write_pcm16(tmp_path / "quiet.wav", quiet), ["fake_counting"])
+    assert row == {"fake_counting": pytest.approx(0.42)}
+
+
+def test_a_silent_clip_raises_a_named_error_on_direct_call():
+    with pytest.raises(SilentAudioError):
+        _CountingMetric()(np.zeros(16000, dtype=np.float32), 16000)
 
 
 def test_intrusive_metric_without_ref_raises_named_error():
