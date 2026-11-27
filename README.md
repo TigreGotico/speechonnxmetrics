@@ -141,10 +141,11 @@ The metric works in three steps.
    a small interface (`PhoneProvider.candidates(text, lect)`), so another phonemiser can
    take its place. A word's candidates are its reading in the sentence, its reading in
    isolation and the spec's free variants, so an optional process is a licensed reading
-   rather than a miss where the spec licenses it. European word-final e is licensed to
-   drop only before a word that begins with a vowel (`que o` read `k o`); before a
-   consonant or at the end of an utterance the specs keep it, so a final e missing there
-   is read as neither lect.
+   rather than a miss where the spec licenses it. European word-final e of a stressed
+   word is licensed to drop only before a word that begins with a vowel (`sabe o` read
+   `ˈsab u`). A proclitic keeps it (`que o` read `kɨ u`), and before a consonant or at
+   the end of an utterance the specs keep it, so a final e missing there is read as
+   neither lect.
 2. **Sites.** The two lects' readings are aligned, and a one-segment difference becomes a
    *site* only in a documented class: coda s, unstressed e, unstressed o, t and d before
    i, and coda l. Differences that are fused with a neighbouring difference (final

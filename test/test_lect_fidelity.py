@@ -122,11 +122,19 @@ def test_providers_give_the_same_words_in_both_lects(provider):
 
 
 def test_optional_processes_reach_the_candidate_set():
-    # European word-final reduced e is deletable: the sentence and isolated readings
-    # of "que" before "o" differ, and both are licensed
+    # European word-final reduced e of a stressed host is deletable before a vowel:
+    # the sentence and isolated readings of "sabe" before "o" differ, and both are licensed
+    e = expect("Ele sabe o caminho", LECTS)
+    sabe = [s for s in e.sites if s.word == "sabe"]
+    assert sabe and () in sabe[0].variants["pt-PT"] and ("ɨ",) in sabe[0].variants["pt-PT"]
+
+
+def test_a_proclitic_keeps_its_final_e_before_a_vowel():
+    # A proclitic has no lexical stress, so it is not a prosodic word and keeps its
+    # final vowel (Vigário 2003 and 2010, reported by Paulino 2016: 9)
     e = expect("Ele disse que o Rio de Janeiro é bonito", LECTS)
     que = [s for s in e.sites if s.word == "que"]
-    assert que and () in que[0].variants["pt-PT"] and ("ɨ",) in que[0].variants["pt-PT"]
+    assert que and () not in que[0].variants["pt-PT"] and ("ɨ",) in que[0].variants["pt-PT"]
 
 
 def test_free_variants_come_from_the_spec():

@@ -44,7 +44,7 @@ speechonnxmetrics = "speechonnxmetrics.cli:main"
 # runtime dependency
 test = [
     "pytest", "pytest-cov", "scipy",
-    "orthography2ipa[portuguese]>=7.109.0a2", "scriptconv>=0.0.3", "tugaphone>=1.4.1a2",
+    "orthography2ipa[portuguese]>=7.124.14a2", "scriptconv>=0.0.3", "tugaphone>=1.4.1a2",
 ]
 # offline model conversion scripts only (maintainer use); never a runtime dependency
 export = ["torch", "onnx"]
@@ -54,7 +54,7 @@ speaker = ["speakeronnx"]
 asr = ["onnx-asr"]
 vad = ["vadonnx"]
 # expected phones per lect for lect_fidelity; silabificador places Portuguese stress
-lect = ["orthography2ipa[portuguese]>=7.109.0a2", "scriptconv>=0.0.3"]
+lect = ["orthography2ipa[portuguese]>=7.124.14a2", "scriptconv>=0.0.3"]
 # the tugaphone expected-phone provider for lect_fidelity
 lect-tugaphone = ["speechonnxmetrics[lect]", "tugaphone>=1.4.1a2"]
 
