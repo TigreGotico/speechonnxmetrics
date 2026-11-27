@@ -23,8 +23,7 @@ print(min_dcf(scores, labels, p_target=0.01))  # 0.33333333333333337
 print(equal_error_threshold(scores, labels))  # 0.6
 ```
 
-The functions are numpy code. But `speechonnxmetrics.speaker` imports `speakeronnx`,
-so the import needs the `speaker` extra ([issue #7](https://github.com/TigreGotico/speechonnxmetrics/issues/7)).
+The functions are numpy code and need no extra.
 
 ## History
 

@@ -2,7 +2,7 @@
 
 A ``python`` block runs when one of its lines is ``print(<expr>)  # <expected>``. The
 check compares ``str(<expr>)`` with ``<expected>``, and compares numbers with a
-relative tolerance of 1e-9. Blocks of one page run in order in one process, from the
+relative tolerance of 1e-6. Blocks of one page run in order in one process, from the
 repository root.
 """
 from __future__ import annotations
