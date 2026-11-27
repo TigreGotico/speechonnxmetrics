@@ -1,44 +1,57 @@
-# NISQA — multidimensional speech quality
+# NISQA
+<!-- agent-hint
+covers: what nisqa predicts, its range, its licence, when to use it and its call
+source: speechonnxmetrics/mos/nisqa.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "metric-guides/nisqa.md"
+see: stoi-estoi.md
+-->
+
+NISQA predicts the overall quality of a clip and four quality dimensions, without a
+reference. Its weights forbid commercial use.
 
 ## History
-NISQA was developed at TU Berlin's Quality and Usability Lab by Gabriel Mittag and
-colleagues, presented in *NISQA: A Deep CNN-Self-Attention Model for Multidimensional
-Speech Quality Prediction with Crowdsourced Datasets* (Mittag, Naderi, Chehadi & Möller,
-Interspeech 2021). Its motivation was that a single overall MOS hides *why* quality is low,
-so NISQA predicts overall MOS **plus** four perceptual quality dimensions — noisiness,
-coloration, discontinuity, loudness — trained on large crowdsourced datasets covering
-telephone- and communication-network degradations. The model here is NISQA-v2.
 
-## What it measures
-Overall quality and its breakdown: `mos` (overall), `noi` (noisiness), `dis`
-(discontinuity), `col` (coloration), `loud` (loudness). No reference needed.
+Gabriel Mittag and colleagues at the TU Berlin Quality and Usability Lab made NISQA.
+They describe it in *NISQA: A Deep CNN-Self-Attention Model for Multidimensional Speech
+Quality Prediction with Crowdsourced Datasets* (Mittag, Naderi, Chehadi and Möller,
+Interspeech 2021). One overall MOS does not show why the quality is low. So NISQA also
+predicts noisiness, coloration, discontinuity and loudness. Its training data is large
+crowdsourced sets of telephone and network degradations. This package uses NISQA-v2.
 
-## Range & direction
-Each score 1–5, **higher is better**. `nisqa` → dict flattened to `nisqa.mos`, `nisqa.noi`,
-`nisqa.dis`, `nisqa.col`, `nisqa.loud`. **Rate-adaptive**: NISQA never resamples — it
-derives its mel hop/window from the file's own sample rate, as the reference does. It pools
-15-frame mel patches inside the graph, so audio shorter than 15 mel frames is *rejected*
-rather than padded.
+## Range and direction
 
-## When to use / when not
-- **Use** for a communication-quality read with a dimensional breakdown, complementary to
-  DNSMOS. Handy when you want a second, independently-trained MOS opinion.
-- **Do not** use it commercially: its **weights are CC BY-NC-SA 4.0 (NonCommercial)** — the
-  one NonCommercial artifact in this package (the code is MIT). If your use is commercial,
-  drop NISQA and use UTMOS/DNSMOS/SIGMOS. Also avoid it on very short clips (see the 15-frame
-  floor). Output order is `mos, noi, dis, col, loud` — the upstream class docstring lists
-  coloration before discontinuity and is wrong; this package follows the code.
+Each score is 1 to 5, and higher is better. The result flattens to `nisqa.mos`,
+`nisqa.noi`, `nisqa.dis`, `nisqa.col` and `nisqa.loud`. The output order follows the
+upstream code. The upstream class docstring puts coloration before discontinuity, and
+it is wrong.
 
-## Domain
-Telecommunication / VoIP speech quality; multidimensional degradation diagnosis.
+NISQA does not resample. It takes its mel hop and window from the sample rate of the
+file, as the reference does. It pools mel patches of 15 frames inside the graph, so it
+rejects audio shorter than 15 mel frames.
+
+## When to use it
+
+- Use it for communication quality with a breakdown by dimension, next to DNSMOS. It
+  gives a second MOS from an independent model.
+- Do not use it for commercial work. Its weights are CC BY-NC-SA 4.0 (NonCommercial),
+  and its code is MIT. For commercial use, choose UTMOS, DNSMOS or SIGMOS.
+- Do not use it on very short clips, because of the 15-frame floor.
 
 ## In this library
+
+The call downloads the model on the first run, so this page shows it without output:
+
 ```python
 import speechonnxmetrics as s
+
 s.score("test/fixtures/audio/source.wav", ["nisqa"])
-# -> {'nisqa.mos': .., 'nisqa.noi': .., 'nisqa.dis': .., 'nisqa.col': .., 'nisqa.loud': ..}
 ```
 
 ## Further reading
-Mittag, Naderi, Chehadi, Möller, *NISQA…*, Interspeech 2021. Licence caveat:
-[../models.md](../models.md).
+
+Mittag, Naderi, Chehadi, Möller, *NISQA*, Interspeech 2021. [Models and
+licences](../models.md) gives the licence terms.
+
+---
+[← SIGMOS](sigmos.md) · [Home](../index.md) · [STOI and ESTOI →](stoi-estoi.md)

@@ -1,109 +1,92 @@
 # Usage
+<!-- agent-hint
+covers: score and score_batch, the result shape, text metrics, custom metrics, the model cache and GPU providers
+source: speechonnxmetrics/api.py, speechonnxmetrics/registry.py, speechonnxmetrics/base.py, speechonnxmetrics/resolver.py
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "usage.md"
+see: cli.md
+-->
 
-## `score` vs `score_batch`
+This page shows the Python API: how to score one clip or a batch, how to read the
+result, and how to add your own metric.
 
-`score` handles one item. `score_batch` handles many. Both return the same per-item
-flat dict. `score` is a thin wrapper over `score_batch([audio], ...)[0]`.
+## Example
 
 ```python
 import speechonnxmetrics as s
 
-# single item
-s.score("clip.wav", ["utmos", "dnsmos"])
-
-# batch
-s.score_batch(["a.wav", "b.wav"], metrics=["utmos"])
+ref = "test/fixtures/audio/source.wav"
+deg = "test/fixtures/audio/facodec_aria.wav"
+print(s.score(deg, ["stoi"], ref=ref))  # {'stoi': 0.6620030195244008}
+print(s.score_batch([deg, deg], ["stoi"], refs=[ref, ref]))  # [{'stoi': 0.6620030195244008}, {'stoi': 0.6620030195244008}]
 ```
 
-Signatures:
+## `score` and `score_batch`
 
 ```python
-score(audio, metrics, ref=None, sr=None) -> dict[str, Any]
-score_batch(audios, metrics, refs=None, sr=None) -> list[dict[str, Any]]
+score(audio, metrics, ref=None, sr=None, providers=None) -> dict[str, Any]
+score_batch(audios, metrics, refs=None, sr=None, providers=None) -> list[dict[str, Any]]
 ```
 
-- `audio`/`audios`: path, bytes, or a numpy array. `sr` is a sample-rate hint used when
-  the input is a raw array or headerless.
-- `metrics`: a sequence of registered **audio** metric names (case-insensitive).
-  Duplicate names, an empty list, or a text-metric name raise `ValueError`.
-- `ref`/`refs`: reference audio, required when any requested metric is intrusive.
-  `refs` must match `audios` in length.
+`score` calls `score_batch` with one item and returns its result.
 
-### Why `score_batch` is the hot path
+- `audio`: a path, bytes or a numpy array. `sr` gives the sample rate of a raw array.
+- `metrics`: the names of registered audio metrics. The names are not case-sensitive.
+  An empty list, a duplicate name or the name of a text metric raises `ValueError`.
+- `ref` and `refs`: the reference audio. An intrusive metric needs it. `refs` has the
+  same length as `audios`.
+- `providers`: the onnxruntime execution providers for this call. See
+  [GPU inference](#gpu-inference).
 
-Each metric name is resolved from the registry **once** and reused across every item.
-For an ONNX-backed MOS metric that means the onnxruntime session is built on the first
-item and every later item reuses it, so you do not pay session setup per clip. Over an
-eval of thousands of clips that is the difference between one model load and thousands.
+`score_batch` resolves each metric name once. An ONNX metric builds its onnxruntime
+session on the first item, and the next items use the same session.
 
-It also isolates failures. A metric that raises on one item, such as a corrupt file or
-audio too short for NISQA, records `None` for that item's value and the exception
-message under `"_errors"`, and the batch keeps running. A single bad file cannot sink an
-hours-long run.
+A metric that fails on one item does not stop the batch. The value for that item is
+`None`, and the error message goes under `_errors`:
 
 ```python
-results = s.score_batch(["ok.wav", "corrupt.wav"], ["utmos"])
-# results[1] == {'utmos': None, '_errors': {'utmos': '...'}}
+print(s.score_batch([deg, b"not audio"], ["stoi"], refs=[ref, ref])[1]["stoi"])  # None
 ```
 
-If a whole item fails to load, every requested metric for that item is `None` with the
-load error recorded.
+When an item does not load, each metric of that item is `None` and records the load
+error. A no-reference metric refuses digital silence with `SilentAudioError`.
 
-## Output shape
+## Result shape
 
-Results are a **flat dict of floats**. Scalar metrics map name to value. Dict-valued
-metrics (multi-head models) are flattened with a dotted prefix:
+The result is a flat dict. A metric that gives one value maps its name to the value. A
+metric that gives several values adds a dotted name for each:
 
-```python
-s.score("clip.wav", ["utmos", "dnsmos", "nisqa"])
-# {
-#   'utmos': 4.41,
-#   'dnsmos.sig': 3.45, 'dnsmos.bak': 3.60, 'dnsmos.ovrl': 2.93,
-#   'nisqa.mos': 4.74, 'nisqa.noi': 4.64, 'nisqa.dis': 4.78,
-#   'nisqa.col': 4.34, 'nisqa.loud': 4.63,
-# }
-```
+| Metric | Keys |
+| :--- | :--- |
+| `dnsmos` | `dnsmos.sig`, `dnsmos.bak`, `dnsmos.ovrl` |
+| `nisqa` | `nisqa.mos`, `nisqa.noi`, `nisqa.dis`, `nisqa.col`, `nisqa.loud` |
+| `sigmos` | `sigmos.col`, `sigmos.disc`, `sigmos.loud`, `sigmos.noise`, `sigmos.reverb`, `sigmos.sig`, `sigmos.ovrl` |
 
-`sigmos` flattens to `sigmos.col`, `sigmos.disc`, `sigmos.loud`, `sigmos.noise`,
-`sigmos.reverb`, `sigmos.sig`, `sigmos.ovrl`.
+## Text metrics
 
-## Audio vs text metrics
-
-The registry holds both, so `list_metrics()` and the CLI enumerate everything in one
-place, but `score()`/`score_batch()` dispatch only `kind="audio"`. Passing a text metric
-name (`wer`, `cer`, `mer`, `wil`, `wip`) to `score()` raises, telling you to call it
-directly:
+The registry holds the text metrics, so `list_metrics()` and the CLI show them. But
+`score()` runs only audio metrics. Call the text metrics from `speechonnxmetrics.asr`:
 
 ```python
 from speechonnxmetrics import asr
 
-asr.wer("the quick brown fox", "the quick brown box")          # 0.25
-asr.cer("the quick brown fox", "the quick brown box")          # per-character
-asr.compute("ref", "hyp")                                       # AsrMetrics with all rates
-asr.wer(ref, hyp, normalizer=asr.STRICT)                        # opt-in normalization
+print(asr.wer("the quick brown fox", "the quick brown box"))  # 0.25
+print(asr.cer("the quick brown fox", "the quick brown box"))  # 0.05263157894736842
+try:
+    s.score(ref, ["wer"])
+except ValueError as error:
+    print(error)  # metric 'wer' is a text metric — call speechonnxmetrics.asr.wer directly
 ```
 
-See [metrics.md](metrics.md) for the normalizer presets and the LEGACY caveat.
+The [metrics reference](metrics.md#asr-based-text-metrics) lists the normalizer presets.
 
-## Registering a custom metric
+## Add a custom metric
 
-Any object matching the `Metric` protocol can be registered and then used by
-`score`/`score_batch`, `list_metrics` and the CLI. The protocol is:
-
-```python
-name: str
-sample_rate: int | None      # native rate, or None for rate-agnostic
-intrusive: bool              # True => a reference is required
-range: tuple[float, float] | None
-higher_is_better: bool
-def __call__(self, deg, sr, *, ref=None, ref_sr=None) -> float | dict[str, float]: ...
-```
-
-Wrap it (or a plain function of the same call shape) in a `RegistryEntry` and register:
+A function or an object with the `Metric` call shape can go in the registry. Then
+`score`, `score_batch`, `list_metrics` and the CLI use it:
 
 ```python
 import numpy as np
-import speechonnxmetrics as s
 from speechonnxmetrics import RegistryEntry, register
 
 def rms_dbfs(deg, sr, *, ref=None, ref_sr=None) -> float:
@@ -115,41 +98,65 @@ register(RegistryEntry(
     fn=rms_dbfs, range=None, higher_is_better=True,
     description="Signal RMS level in dBFS",
 ))
-
-s.score("clip.wav", ["rms_dbfs"])   # {'rms_dbfs': -20.73...}
+print(s.score(ref, ["rms_dbfs"])["rms_dbfs"])  # -20.73763214588542
 ```
 
-For an ONNX-backed metric, subclass `OnnxMetric` instead. Set the class attributes,
-provide a `ModelEntry`, and implement `_frontend` (audio to input feed) and
-`_postprocess` (outputs to score). The base handles lazy, thread-safe session creation,
-resampling to `ModelEntry.sample_rate`, and download resolution. See
-`speechonnxmetrics/mos/` for worked subclasses. A full runnable example is in
-[`../examples/custom_metric.py`](../examples/custom_metric.py).
-
-## Model cache and offline behaviour
-
-`import speechonnxmetrics` touches neither the network nor onnxruntime. Constructing a
-MOS metric also downloads nothing. The onnxruntime session, and therefore the download,
-is created lazily on the **first call**.
-
-- **Where weights land:** `$XDG_DATA_HOME/speechonnxmetrics` (that is,
-  `~/.local/share/speechonnxmetrics` by default), fetched through `huggingface_hub` from
-  the per-model HF repos listed in [models.md](models.md), pinned by revision.
-- **HF cache:** the download goes through `huggingface_hub`, so `HF_HOME` and
-  `HF_HUB_OFFLINE` apply as usual for the fetch step.
-- **Pre-fetch:** call the metric once (for example
-  `s.score(fixture, ["utmos","dnsmos","nisqa","sigmos"])`) in a warm-up step to populate
-  the cache before an offline run. After that, scoring runs fully offline.
-- **Which metrics download:** exactly the ones with `requires_download=True`, the five
-  MOS predictors. Every intrusive and text metric is pure numpy and never downloads.
-- **Provenance:** every `OnnxMetric` exposes `.model_info` (`repo_id`, `filename`,
-  `revision`) so callers can record exactly which pinned weights produced a score.
+The `Metric` protocol in `speechonnxmetrics/base.py`:
 
 ```python
-# pre-fetch every downloadable model, then run offline
+name: str
+sample_rate: int | None      # native rate, or None when the metric takes any rate
+intrusive: bool              # True when the metric needs a reference
+range: tuple[float, float] | None
+higher_is_better: bool
+def __call__(self, deg, sr, *, ref=None, ref_sr=None) -> float | dict[str, float]: ...
+```
+
+For an ONNX metric, subclass `OnnxMetric`. Set the class attributes, give a
+`ModelEntry`, and write `_frontend` (audio to model input) and `_postprocess` (model
+output to score). The base class makes the session on the first call, resamples to
+`ModelEntry.sample_rate` and downloads the model. The classes in `speechonnxmetrics/mos/`
+are examples, and [`examples/custom_metric.py`](../examples/custom_metric.py) runs one.
+
+## Model cache and offline use
+
+The import opens no network connection. A MOS metric downloads nothing when you make
+it. It makes its onnxruntime session, and downloads the model, on its first call.
+
+- The weights go in the Hugging Face cache layout under
+  `$XDG_DATA_HOME/speechonnxmetrics/hf`, or `~/.local/share/speechonnxmetrics/hf` when
+  `XDG_DATA_HOME` is not set.
+- The download goes through `huggingface_hub`, so `HF_HUB_OFFLINE` applies to it. The
+  package sets its own cache directory, so `HF_HOME` does not move the weights.
+- Each model is pinned to a commit. [Models](models.md) lists the repos and revisions.
+- The metrics with `requires_download=True` download a model: the five MOS
+  predictors. The intrusive and text metrics never download.
+- Each `OnnxMetric` has `.model_info` with `repo_id`, `filename` and `revision`. Record
+  it next to a score to name the weights that made it.
+
+To fill the cache before an offline run, call each model once:
+
+```python
 downloadable = [e.name for e in s.list_metrics(requires_download=True)]
 s.score("test/fixtures/audio/source.wav", downloadable)
 ```
 
+## GPU inference
+
+The ONNX metrics run on `CPUExecutionProvider` by default. To use a GPU, install
+`onnxruntime-gpu` with a matching CUDA and cuDNN, then set the providers in one of two
+ways:
+
+- Set `SPEECHONNXMETRICS_PROVIDERS` to a comma-separated list, for example
+  `CUDAExecutionProvider,CPUExecutionProvider`. Each ONNX session in the process reads
+  it. Use it for the CLI and for code that you cannot change.
+- Pass `providers=` to `score()`, `score_batch()` or an `OnnxMetric` constructor. It
+  has priority over the environment variable. The numpy metrics ignore it.
+
+The package keeps only the providers that `onnxruntime.get_available_providers()`
+lists. When the list does not hold `CPUExecutionProvider`, the package adds it at
+the end. A provider that is not
+available does not raise an error.
+
 ---
-[← Metrics](metrics.md) · [Home](index.md) · [CLI →](cli.md)
+[← Choosing metrics](choosing.md) · [Home](index.md) · [CLI →](cli.md)

@@ -1,14 +1,17 @@
 # Metrics reference
+<!-- agent-hint
+covers: each metric family, its range, direction, sample rate, reference need and paper
+source: speechonnxmetrics/registry.py, speechonnxmetrics/mos/, speechonnxmetrics/intrusive/, speechonnxmetrics/asr/, speechonnxmetrics/speaker/
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "docs/metrics.md"
+see: lect-fidelity.md
+-->
 
-> **New to these metrics?** This page is the terse lookup. For the teaching layer,
-> covering history, intuition, and when to use each one, start with
-> [concepts.md](concepts.md) and [choosing.md](choosing.md), then the per-metric guides
-> linked below. A guide is linked from each family heading here.
-
-Every metric registered in the package, grouped by family. Enumerate the live set with
-`speechonnxmetrics.list_metrics()`. The tables below are built from it. Ranges and
-directions come straight from the registry (`RegistryEntry.range`,
-`.higher_is_better`).
+This page is the lookup table for each metric, grouped by family. The
+[metric guides](metric-guides/README.md) explain the history and use of each metric.
+`speechonnxmetrics.list_metrics()` prints the registered set. The ranges and
+directions come from the registry (`RegistryEntry.range` and
+`RegistryEntry.higher_is_better`).
 
 `score()` and `score_batch()` dispatch only `kind="audio"` metrics. `kind="text"`
 metrics (WER/CER/MER/WIL/WIP) compare strings and are called from
@@ -39,8 +42,10 @@ inside the graph and rejects audio shorter than 15 mel frames rather than paddin
 CC BY-NC-SA 4.0 (NonCommercial)**: its code is MIT but the weights forbid commercial
 use. See [models.md](models.md).
 
-**Parity** (max absolute deviation vs the reference implementation): DNSMOS 1.5e-7,
-UTMOS 3.3e-6, NISQA 2.6e-6.
+**Parity:** `test/test_mos.py` compares each predictor with its reference
+implementation. The tolerances are 1e-5 for `dnsmos` and `dnsmos_p808`, 1e-4 for
+`utmos` and `nisqa`, and 2e-3 for `sigmos`. These tests download the models and carry
+the `models` mark.
 
 Papers:
 
@@ -66,7 +71,7 @@ policy is shared in `speechonnxmetrics.intrusive._common`. Unscorable inputs rai
 | metric | range | ↑better | measures |
 |---|---|---|---|
 | `stoi` | 0-1 | yes | short-time objective intelligibility (analysis resampled to 10 kHz) |
-| `estoi` | 0-1 | yes | extended STOI, correlation over spectral envelopes |
+| `estoi` | -1 to 1, about 0 to 1 in practice | yes | extended STOI, correlation over spectral envelopes |
 | `si_sdr` | dB | yes | scale-invariant signal-to-distortion ratio |
 | `sdr` | dB | yes | signal-to-distortion ratio |
 | `snr` | dB | yes | signal-to-noise ratio |
@@ -77,7 +82,8 @@ policy is shared in `speechonnxmetrics.intrusive._common`. Unscorable inputs rai
 | `msd` | dB | no | mel-spectral distortion |
 | `mel_l1` | unbounded | no | L1 distance on log-mel spectrograms |
 
-**Parity:** STOI matches `pystoi` to 2.6e-10. MCD is validated against `pymcd`.
+**Parity:** `test/test_intrusive.py` compares `stoi` and `estoi` with a committed
+fixture of `pystoi` outputs, to 1e-4 and 3e-4.
 
 Papers:
 
@@ -101,7 +107,7 @@ reference raises `EmptyReferenceError`.
 | metric | range | ↑better | measures |
 |---|---|---|---|
 | `wer` | ≥0 | no | word error rate = (S+D+I)/N |
-| `cer` | 0-1 | no | character error rate |
+| `cer` | ≥0 | no | character error rate |
 | `mer` | 0-1 | no | match error rate |
 | `wil` | 0-1 | no | word information lost |
 | `wip` | 0-1 | yes | word information preserved |
@@ -115,7 +121,7 @@ Normalizer presets (`speechonnxmetrics.asr`): `BASIC` (lowercase + collapse whit
 `LEGACY`. **LEGACY** reproduces the `re.sub(r"[^a-z' ]", " ", text.lower()).split()`
 tokenizer from older call sites and is provided only so migrating them stays
 value-preserving. It discards every non-ASCII character (accented Latin, Arabic, and
-others), so do not use it for new code. Build your own with the `Normalizer` chain and
+others), so do not use it in other code. Build your own with the `Normalizer` chain and
 the exported step functions (`lowercase`, `strip_punctuation`, `remove_diacritics`, and
 others).
 
@@ -134,7 +140,25 @@ Guides: [speaker_similarity](metric-guides/speaker-similarity.md) · [eer + min_
   convention, c_miss = c_fa = 1). Pure numpy.
 - `equal_error_threshold(scores, labels)`: score threshold where FAR is about equal to FRR.
 
-The three verification metrics need only numpy and work without the `speaker` extra.
+The three verification metrics are numpy code. But `speechonnxmetrics.speaker`
+imports `speakeronnx`, so the import needs the `speaker` extra for all four functions ([issue #7](https://github.com/TigreGotico/speechonnxmetrics/issues/7)).
+
+```python
+from speechonnxmetrics.speaker import eer, equal_error_threshold, min_dcf
+
+scores = [0.9, 0.8, 0.4, 0.3, 0.6, 0.2]
+labels = [1, 1, 1, 0, 0, 0]
+print(eer(scores, labels))  # 0.33333333333333337
+print(min_dcf(scores, labels))  # 0.33333333333333337
+print(equal_error_threshold(scores, labels))  # 0.6
+```
+
+## Metrics the package does not give
+
+- **PESQ.** The ITU-T P.862 licence terms do not suit an open package on PyPI. Use a
+  PESQ package under your own licence review.
+- **UTMOSv2.** Its published score is a mean over five folds and five random 3 s
+  crops. An export of one fold and one crop is a different estimator.
 
 ---
-[← Choosing metrics](choosing.md) · [Home](index.md) · [Usage →](usage.md)
+[← CLI](cli.md) · [Home](index.md) · [Lect fidelity →](lect-fidelity.md)

@@ -1,8 +1,15 @@
-# Models
+# Models and licences
+<!-- agent-hint
+covers: each ONNX model the package downloads, its Hugging Face repo, pinned revision, licence and post-processing
+source: speechonnxmetrics/mos/, speechonnxmetrics/lect_fidelity/backends.py, conversion/
+generated: no
+verify: python -m pytest -q test/test_docs.py -k "docs/models.md"
+see: metric-guides/README.md
+-->
 
-Every ONNX model this package downloads, and what it is. Each model lives in its own
+This page lists each ONNX model that the package downloads, and its licence. Each model lives in its own
 HuggingFace repo under the `TigreGotico` org and is fetched on first use into
-`$XDG_DATA_HOME/speechonnxmetrics`. Constructing a metric downloads nothing. The
+`$XDG_DATA_HOME/speechonnxmetrics/hf`. Constructing a metric downloads nothing. The
 session, and therefore the download, is created lazily on the first call.
 
 Every `ModelEntry` is pinned to an immutable commit SHA (`revision=`), not a branch, so
@@ -20,9 +27,12 @@ Licences differ per model, so check this before selecting metrics.
 |---|---|---|
 | **MIT** | `dnsmos`, `dnsmos_p808`, `sigmos`, `utmos` | Commercial use, redistribution and modification all permitted. Keep the attribution. |
 | **CC BY-NC-SA 4.0, NonCommercial** | `nisqa` | **Commercial use is forbidden.** ShareAlike also applies: derivatives must carry the same licence. Only the NISQA *weights* are NC. Its code is MIT. |
+| **Apache-2.0** | `lect_fidelity` with `wav2vec2_espeak` | Commercial use permitted. |
+| **GPL-3.0** | `lect_fidelity` with `allosaurus`, the default backend | Commercial use permitted. Distribution of the weights, or of a work that includes them, carries the GPL obligations. |
 
-Only NISQA carries NonCommercial terms. If your use is commercial, every other metric
-here is safe and NISQA is not. This package makes no choice for you. It exposes the
+The package itself is Apache-2.0. Only NISQA carries NonCommercial terms. The
+collection "speechonnxmetrics models" of the `TigreGotico` Hugging Face org groups the
+models. This package makes no choice for you. It exposes the
 metric and states the terms, and selecting it is the downstream user's call.
 
 ## No-reference MOS predictors
@@ -91,17 +101,17 @@ The Allosaurus graph holds only the acoustic model, a five-layer bidirectional L
 MFCC frontend runs in numpy: 40 Kaldi MFCCs with a povey window, utterance mean and
 variance normalisation, and three stacked frames at a stride of three. The input is
 resampled to 8 kHz with this package's kaiser resampler and stored as 16-bit PCM, as
-Allosaurus reads a WAV file. Allosaurus is sensitive at that level: through this path the
-pipeline gives Allosaurus's own phones on 171 of 172 phones of the test clips, while the
-same audio without the 16-bit step matches exactly on only 3 of the 12 clips. With
-dithering off, the numpy frontend matches Allosaurus's own feature model to 1e-5, which
-a test checks without the model.
+Allosaurus reads a WAV file. The phones of Allosaurus are sensitive to that 16-bit step.
+`test/fixtures/allosaurus_reference.json` stores the phones of Allosaurus itself for the
+test clips, and a parity test compares the pipeline with them. With dithering off, a
+test checks without the model that the numpy frontend matches the stored output of the
+Allosaurus feature model to 1e-3.
 
 The wav2vec2 graph takes the waveform normalised to zero mean and unit variance and
 returns CTC logits; its greedy decoding equals the torch model's on every test clip.
 It cannot judge Brazilian Portuguese: its Portuguese training labels come from the
-European espeak-ng voice, so it writes European phones for Brazilian speech; see the
-README section on lect fidelity for the measurement.
+European espeak-ng voice, so it writes European phones for Brazilian speech; see
+[Lect fidelity](lect-fidelity.md#results-on-real-speech).
 
 Each backend's units are read as IPA in `speechonnxmetrics/lect_fidelity/notation.py`.
 ASCII mnemonics go through scriptconv's Kirshenbaum table; units that spell an affricate
@@ -126,4 +136,4 @@ NISQA was exported from its PyTorch checkpoint at opset 17.
 the two phone recognisers and write the reference outputs the tests compare against.
 
 ---
-[← CLI](cli.md) · [Home](index.md)
+[← Lect fidelity](lect-fidelity.md) · [Home](index.md) · [Metric guides →](metric-guides/README.md)
