@@ -92,7 +92,7 @@ def _wrap_intrusive(fn: AudioFn, *, higher_is_better: bool, range_: tuple[float,
 
 _INTRUSIVE_SPECS: list[tuple[str, AudioFn, bool, tuple[float, float] | None]] = [
     ("stoi", intrusive.stoi, True, (0.0, 1.0)),
-    ("estoi", intrusive.estoi, True, (0.0, 1.0)),
+    ("estoi", intrusive.estoi, True, (-1.0, 1.0)),
     ("si_sdr", intrusive.si_sdr, True, None),
     ("sdr", intrusive.sdr, True, None),
     ("snr", intrusive.snr, True, None),
@@ -147,15 +147,15 @@ for _name, _metric, _desc in _MOS_SPECS:
         )
     )
 
-_TEXT_SPECS: list[tuple[str, TextFn]] = [
-    ("wer", asr.wer),
-    ("cer", asr.cer),
-    ("mer", asr.mer),
-    ("wil", asr.wil),
-    ("wip", asr.wip),
+_TEXT_SPECS: list[tuple[str, TextFn, bool, tuple[float, float] | None]] = [
+    ("wer", asr.wer, False, None),
+    ("cer", asr.cer, False, None),
+    ("mer", asr.mer, False, (0.0, 1.0)),
+    ("wil", asr.wil, False, (0.0, 1.0)),
+    ("wip", asr.wip, True, (0.0, 1.0)),
 ]
 
-for _name, _fn in _TEXT_SPECS:
+for _name, _fn, _higher, _range in _TEXT_SPECS:
     register(
         RegistryEntry(
             name=_name,
@@ -163,8 +163,8 @@ for _name, _fn in _TEXT_SPECS:
             intrusive=True,
             requires_download=False,
             fn=_fn,
-            range=(0.0, 1.0) if _name != "wer" else None,
-            higher_is_better=False,
+            range=_range,
+            higher_is_better=_higher,
             description=(_fn.__doc__ or "").strip().splitlines()[0] if _fn.__doc__ else "",
         )
     )
